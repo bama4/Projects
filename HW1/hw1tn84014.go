@@ -43,11 +43,11 @@ func calc_sum(slice []int64) (sum int64) {
 	return
 }
 
+
 /*
 Processes the sum message. This is the worker thread
 */
 func process_sum_message(msg string) () {
-	defer global_wg.Done()
 	byte_msg := []byte(msg)
 	var request Request
 
@@ -255,7 +255,6 @@ func select_on_channel() {
 				if global_is_logging_file == true {
 					fmt.Println("Message recieved from comms_in", msg_recv)
 				}
-				global_wg.Add(1)
 				go process_sum_message(msg_recv)
 
 			case msg_sent := <-comms_out:
@@ -301,6 +300,10 @@ func coordinator(prog_args [] string) {
 	}
 
 	if num_int_slices < 1 {
+
+		if global_is_logging_file == true {
+			fmt.Println("The NUM_SLICES entered must be greater than 0")
+		}
 		log.Println("The NUM_SLICES entered must be greater than 0")
 		os.Exit(1)
 	}
@@ -309,6 +312,10 @@ func coordinator(prog_args [] string) {
 	log.Println("file size: ", file_size)
 	log.Println("slice_size: ", slice_size)
 	if num_int_slices > file_size {
+
+		if global_is_logging_file == true {
+			fmt.Println("Error: Number of slices cannot be greater than the file size!")
+		}
 		log.Println("Error: Number of slices cannot be greater than the file size!")
 		os.Exit(1)
 		
