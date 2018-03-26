@@ -1,8 +1,17 @@
 package join-ring
 
-/* Fields
+import "fmt"
+import "strconv"
+import msg "./utils/message_defs"
+import chord "./utils/chord_defs"
 
-do - this function 
-sponsoring_node - channel_id: Contacts existing choord ring sponsoring node listening on specific channel
-/*
+// existing channel
+// sponsoring node
+// Gets called on sponsoring node
 
+func join-ring(sponsoring_node ChordNode){
+
+	// Get info about sponsoring node on where to join
+
+
+}
