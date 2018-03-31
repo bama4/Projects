@@ -5,13 +5,15 @@ import "strconv"
 import msg "./utils/message_defs"
 import chord "./utils/chord_defs"
 
-// existing channel
-// sponsoring node
-// Gets called on sponsoring node
+func join-ring(){
+	
+	// Check global map to see if ring exists
+	// if ring doesn't exist, create new ChordNode
+	// predecessor = nil
+	// successor = nil
 
-func join-ring(sponsoring_node ChordNode){
-
-	// Get info about sponsoring node on where to join
-
+	// If global map has nodes
+	// Get sponsoring node from channel
+	// Call find-successor()
 
 }
