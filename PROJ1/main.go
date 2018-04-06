@@ -5,6 +5,8 @@ import "os"
 import "strconv"
 import node "./utils/node_defs"
 import "math/rand"
+import "sync"
+import "time"
 
 /*
 This is the global "network" variable which is essentially a
@@ -19,6 +21,11 @@ var network = make(map[int64](chan string))
 This is a map that consists of all of the nodes that are in the Chord ring
 */
 var ring_nodes = make(map[int64](node.Node))
+
+/*
+This is the global sync group to handle the goroutines properly
+*/
+var wg sync.WaitGroup
 
 /*
 Generates a unique channel id that is not already in the network
@@ -55,11 +62,13 @@ func init_topology(num_nodes int){
 		id := generate_channel_id(num_nodes)
 		
 		fmt.Printf("%d\n", id)
-		/*
+	
 		//add node to network
-		network[id] = make(chan string)	
+		network[int64(id)] = make(chan string)	
 		//start up node
-		go net_node(id)*/
+		id_64 := int64(id)
+		wg.Add(1)
+		go net_node(id_64)
 	}
 }
 
@@ -68,16 +77,20 @@ func init_topology(num_nodes int){
 This is a routine that defines a node. The routine listens on the channel that is assigned
 to the given channel id  for incoming messages.
 */
-/*
-func net_node(channel_id){
+func net_node(channel_id int64){
+	
+        defer wg.Done()
 	//create a node structure to store information,
 	//successor/predecessor references, etc.
-	var node_obj = node.Node {ChannelId: channel_id}
-	var isin_ring = False
-
-	for true {
+	/*var node_obj = node.Node {ChannelId: channel_id}
+	var isin_ring = false*/
+	for {
 		select {
 			case msg_recv := <-network[channel_id]:
+
+				fmt.Printf("Node: %d\n", channel_id)
+				fmt.Println("Message Recieved: ", msg_recv)
+				/*
 				//unmarshall string into struct object
 				//based on message do a blocking action
 				//struct_message = json.UnMarshall(msg_recv)
@@ -85,34 +98,48 @@ func net_node(channel_id){
 				if action == "join"{
 					sponsoring_node_id = struct_message.SponsoringNode
 					join(sponsoring_node_id, node_obj)
-				} else if (action == "put"){
+			   	} else if (action == "put"){
 					respond_to_node_id = struct_message.RespondTo
 					data = struct_message.Data
 					put(data, respond_to_node_id, node_obj)
-
-				
 				}...
-
+				*/
+				return
+			default:
+				time.Sleep(0)
+		}
+		return
 	}
 }
-*/
+
+/*
+/*A function that cleans up after goroutines*/
+func cleanup(){
+	for _, channel := range network {
+		close(channel)
+	}
+}
+
 func coordinator(prog_args []string){
 
 	var file_name = prog_args[0]
 	_ = file_name
-	var num_nodes, err = strconv.Atoi(prog_args[1])
-	_ = err
+	var num_nodes, _ = strconv.Atoi(prog_args[1])
 	fmt.Println("This is the coordinator.")
 
 	//Create a bunch of random nodes for the network
 	init_topology(num_nodes)
 
+	//Send a message
+	var random_node_id = int64(rand.Intn(10))
+	network[random_node_id] <- "{'do':'something'}"
 	//get a list of string json instructions to send to random nodes
 	/*var instructions := create_message_list(file_name)
 	for (i; i< len(instructions); i++){
 		//pick_random_net_node() pick a random node on network to send the message to.
 		
 	}*/
+	
 }
 
 
@@ -130,6 +157,13 @@ func main(){
 		os.Exit(1)
 	}
 
+	//Set up random generator seed
+	rand.Seed(time.Now().UTC().UnixNano())
+
+	//run coordinator
 	coordinator(prog_args)
+	wg.Wait()
+	cleanup()
+	return
 }
 
