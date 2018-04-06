@@ -5,7 +5,7 @@ import "strconv"
 import msg "./utils/message_defs"
 import chord "./utils/node_defs"
 
-func join-ring(sponsoring_node *chord.Node){
+func join-ring(node_id int, sponsoring_node *chord.Node){
 	
 	// Check global map to see if ring exists
 	// if ring doesn't exist, create new ChordNode
