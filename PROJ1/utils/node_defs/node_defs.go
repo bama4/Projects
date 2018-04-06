@@ -1,7 +1,5 @@
 package node_defs
 
-import msg "../message_defs"
-
 /*
 This structure defines a node. 
 Each goroutine that is listening on a channel will use this structure to store its

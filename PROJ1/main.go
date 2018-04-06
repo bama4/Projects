@@ -1,8 +1,8 @@
 package main
 
 import "fmt"
+import "os"
 import "strconv"
-import msg "./utils/message_defs"
 import node "./utils/node_defs"
 import "math/rand"
 
@@ -18,28 +18,31 @@ var network = make(map[int64](chan string))
 /*
 This is a map that consists of all of the nodes that are in the Chord ring
 */
-var ring_nodes = make(map[int64](node.Node*))
+var ring_nodes = make(map[int64](node.Node))
 
 /*
 Generates a unique channel id that is not already in the network
 */
 func generate_channel_id(max_id int) (rand_num int){
 
-	/*
-	var rand_num := 0
-	if len(network) == max_id{
+	rand_num = 0
+	if len(network) == max_id {
 		//cant generate a unique id
-		return nil
+		return -1
 	}
 
-	while(True){
+	for(true){
 		rand_num = rand.Intn(max_id)
-		if rand_num not in network {
+		//If we generated a channel id that is not in use
+		//, return True
+		if val, ok := network[int64(rand_num)]; ok != true {
+			_ = val
 			return rand_num
 		}
 	}
-	*/
+	return rand_num
 }
+
 
 /*
 Initializes the network with nodes with random identifiers.
@@ -47,17 +50,18 @@ Creates nodes with random identifiers and adds them to the network map.
 */
 func init_topology(num_nodes int){
 	
-	/*
-	for i=0; i < num_nodes; i++ {
-		id = generate_channel_id(1000)
+
+	for i:=0; i < num_nodes; i++ {
+		id := generate_channel_id(num_nodes)
+		
+		fmt.Printf("%d\n", id)
+		/*
 		//add node to network
 		network[id] = make(chan string)	
 		//start up node
-		go net_node(id)
+		go net_node(id)*/
 	}
-	*/
 }
-
 
 
 /*
@@ -92,26 +96,25 @@ func net_node(channel_id){
 	}
 }
 */
-	/*
 func coordinator(prog_args []string){
 
 	var file_name = prog_args[0]
-	var num_nodes = int(prog_args[1])
+	_ = file_name
+	var num_nodes, err = strconv.Atoi(prog_args[1])
+	_ = err
 	fmt.Println("This is the coordinator.")
 
 	//Create a bunch of random nodes for the network
 	init_topology(num_nodes)
 
 	//get a list of string json instructions to send to random nodes
-	var instructions := create_message_list(file_name)
+	/*var instructions := create_message_list(file_name)
 	for (i; i< len(instructions); i++){
 		//pick_random_net_node() pick a random node on network to send the message to.
 		
-	}
-	
-	
-	*/
+	}*/
 }
+
 
 /*
 This is the main function which takes in the parameters for the program.
@@ -123,10 +126,10 @@ func main(){
 
 	var prog_args = os.Args[1:]
 		if len(prog_args) < 1 {
-		log.Println("USAGE: go run main.go <INSTRUCTION FILE> <NUM NODES>")
+		fmt.Println("USAGE: go run main.go <INSTRUCTION FILE> <NUM NODES>")
 		os.Exit(1)
 	}
 
-	//coordinator(prog_args)
+	coordinator(prog_args)
 }
 
