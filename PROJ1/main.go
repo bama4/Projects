@@ -25,20 +25,20 @@ Generates a unique channel id that is not already in the network
 */
 func generate_channel_id(max_id int) (rand_num int){
 
-	/*
-	var rand_num := 0
-	if len(network) == max_id{
-		//cant generate a unique id
-		return nil
-	}
+    /*
+    var rand_num := 0
+    if len(network) == max_id{
+        //cant generate a unique id
+        return nil
+    }
 
-	while(True){
-		rand_num = rand.Intn(max_id)
-		if rand_num not in network {
-			return rand_num
-		}
-	}
-	*/
+    while(True){
+        rand_num = rand.Intn(max_id)
+        if rand_num not in network {
+            return rand_num
+        }
+    }
+    */
 }
 
 /*
@@ -46,16 +46,16 @@ Initializes the network with nodes with random identifiers.
 Creates nodes with random identifiers and adds them to the network map.
 */
 func init_topology(num_nodes int){
-	
-	/*
-	for i=0; i < num_nodes; i++ {
-		id = generate_channel_id(1000)
-		//add node to network
-		network[id] = make(chan string)	
-		//start up node
-		go net_node(id)
-	}
-	*/
+    
+    /*
+    for i=0; i < num_nodes; i++ {
+        id = generate_channel_id(1000)
+        //add node to network
+        network[id] = make(chan string)    
+        //start up node
+        go net_node(id)
+    }
+    */
 }
 
 
@@ -66,51 +66,51 @@ to the given channel id  for incoming messages.
 */
 /*
 func net_node(channel_id){
-	//create a node structure to store information,
-	//successor/predecessor references, etc.
-	var node_obj = node.Node {ChannelId: channel_id}
-	var isin_ring = False
+    //create a node structure to store information,
+    //successor/predecessor references, etc.
+    var node_obj = node.Node {ChannelId: channel_id}
+    var isin_ring = False
 
-	for true {
-		select {
-			case msg_recv := <-network[channel_id]:
-				//unmarshall string into struct object
-				//based on message do a blocking action
-				//struct_message = json.UnMarshall(msg_recv)
-				//var action = struct_message.Do
-				if action == "join"{
-					sponsoring_node_id = struct_message.SponsoringNode
-					join(sponsoring_node_id, node_obj)
-				} else if (action == "put"){
-					respond_to_node_id = struct_message.RespondTo
-					data = struct_message.Data
-					put(data, respond_to_node_id, node_obj)
+    for true {
+        select {
+            case msg_recv := <-network[channel_id]:
+                //unmarshall string into struct object
+                //based on message do a blocking action
+                //struct_message = json.UnMarshall(msg_recv)
+                //var action = struct_message.Do
+                if action == "join"{
+                    sponsoring_node_id = struct_message.SponsoringNode
+                    join(sponsoring_node_id, node_obj)
+                } else if (action == "put"){
+                    respond_to_node_id = struct_message.RespondTo
+                    data = struct_message.Data
+                    put(data, respond_to_node_id, node_obj)
 
-				
-				}...
+                
+                }...
 
-	}
+    }
 }
 */
-	/*
+    /*
 func coordinator(prog_args []string){
 
-	var file_name = prog_args[0]
-	var num_nodes = int(prog_args[1])
-	fmt.Println("This is the coordinator.")
+    var file_name = prog_args[0]
+    var num_nodes = int(prog_args[1])
+    fmt.Println("This is the coordinator.")
 
-	//Create a bunch of random nodes for the network
-	init_topology(num_nodes)
+    //Create a bunch of random nodes for the network
+    init_topology(num_nodes)
 
-	//get a list of string json instructions to send to random nodes
-	var instructions := create_message_list(file_name)
-	for (i; i< len(instructions); i++){
-		//pick_random_net_node() pick a random node on network to send the message to.
-		
-	}
-	
-	
-	*/
+    //get a list of string json instructions to send to random nodes
+    var instructions := create_message_list(file_name)
+    for (i; i< len(instructions); i++){
+        //pick_random_net_node() pick a random node on network to send the message to.
+        
+    }
+    
+    
+    */
 }
 
 /*
@@ -121,12 +121,13 @@ and (TODO) the mean variable to use in the randomization of the node response ti
 */
 func main(){
 
-	var prog_args = os.Args[1:]
-		if len(prog_args) < 1 {
-		log.Println("USAGE: go run main.go <INSTRUCTION FILE> <NUM NODES>")
-		os.Exit(1)
-	}
+    var prog_args = os.Args[1:]
+        if len(prog_args) < 1 {
+        log.Println("USAGE: go run main.go <INSTRUCTION FILE> <NUM NODES>")
+        os.Exit(1)
+    }
 
-	//coordinator(prog_args)
+    //coordinator(prog_args)
 }
+
 
