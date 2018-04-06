@@ -69,6 +69,7 @@ func net_node(channel_id){
 	//create a node structure to store information,
 	//successor/predecessor references, etc.
 	var node_obj = node.Node {ChannelId: channel_id}
+	var isin_ring = False
 
 	for true {
 		select {
@@ -103,7 +104,10 @@ func coordinator(prog_args []string){
 
 	//get a list of string json instructions to send to random nodes
 	var instructions := create_message_list(file_name)
-
+	for (i; i< len(instructions); i++){
+		//pick_random_net_node() pick a random node on network to send the message to.
+		
+	}
 	
 	
 	*/
