@@ -17,7 +17,7 @@ type Message struct {
 	SponsoringNode string `json:"sponsoring_node"`
 	Mode string `json:"mode"`
 	RespondTo string `json:"respond_to"`
-	Data `json:"data"`
+	Data Data `json:"data"`
 }
 
 type Data struct {
