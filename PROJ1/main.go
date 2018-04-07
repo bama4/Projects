@@ -7,6 +7,7 @@ import node "./utils/node_defs"
 import "math/rand"
 import "sync"
 import "time"
+import "log"
 
 /*
 This is the global "network" variable which is essentially a
@@ -229,12 +230,6 @@ func main(){
     }
 
     //coordinator(prog_args)
-	var prog_args = os.Args[1:]
-		if len(prog_args) < 1 {
-		fmt.Println("USAGE: go run main.go <INSTRUCTION FILE> <NUM NODES>")
-		os.Exit(1)
-	}
-
 	//Set up random generator seed
 	rand.Seed(time.Now().UTC().UnixNano())
 
