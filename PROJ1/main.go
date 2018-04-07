@@ -70,7 +70,7 @@ func create_ring(){
 
 	if len(ring_nodes) == 0 {
 		rand_net_id := get_random_network_node()
-		network[rand_net_id] <- "create"
+		network[rand_net_id] <- "{'do':'create'}"
 	}
 }
 
@@ -153,9 +153,11 @@ func net_node(channel_id int64){
 		select {
 			case msg_recv := <-network[channel_id]:
 
-				fmt.Printf("Node: %d\n", channel_id)
+				fmt.Printf("\nNode: %d\n", channel_id)
 				fmt.Println("Message Recieved: ", msg_recv)
-				if msg_recv == "create" {
+				if msg_recv == "{'do':'create'}" {
+					//This is the first node to enter the ring. Make this node's successor itself.
+					node_obj.Successor = &node_obj
 					ring_nodes[channel_id] = node_obj
 					is_in_ring = true
 					fmt.Printf("Node %d is in the ring now. %b", channel_id, is_in_ring)
