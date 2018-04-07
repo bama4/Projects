@@ -4,9 +4,13 @@ import "fmt"
 import "os"
 import "strconv"
 import node "./utils/node_defs"
+import msg "./utils/message_defs"
 import "math/rand"
 import "sync"
 import "time"
+import "io/ioutil"
+import "strings"
+import "encoding/json"
 
 /*
 This is the global "network" variable which is essentially a
@@ -27,10 +31,46 @@ This is the global sync group to handle the goroutines properly
 */
 var wg sync.WaitGroup
 
+
+func check_error(err error){
+	if err != nil {
+		fmt.Println("Error : ", err)
+		os.Exit(1)
+	}
+	
+}
+/*Gets a random node in the chord ring
+*/
+func get_random_ring_node(max_id int) (rand_num int64) {
+	for(true){
+		rand_num := rand.Intn(max_id)
+		//If we generated a channel id that is in use in the ring, return the number
+		if val, ok := ring_nodes[int64(rand_num)]; ok {
+			_ = val
+			return int64(rand_num)
+		}
+	}
+	return int64(rand_num)
+}
+
+/*Gets a random node in the network
+*/
+func get_random_network_node(max_id int) (rand_num int64){
+	for(true){
+		rand_num := rand.Intn(max_id)
+		//If we generated a channel id that is in use in the network, return the number
+		if val, ok := network[int64(rand_num)]; ok {
+			_ = val
+			return int64(rand_num)
+		}
+	}
+	return int64(rand_num)
+}
+
 /*
 Generates a unique channel id that is not already in the network
 */
-func generate_channel_id(max_id int) (rand_num int){
+func generate_channel_id(max_id int) (rand_num int64){
 
 	rand_num = 0
 	if len(network) == max_id {
@@ -39,15 +79,15 @@ func generate_channel_id(max_id int) (rand_num int){
 	}
 
 	for(true){
-		rand_num = rand.Intn(max_id)
+		rand_num := rand.Intn(max_id)
 		//If we generated a channel id that is not in use
 		//, return True
 		if val, ok := network[int64(rand_num)]; ok != true {
 			_ = val
-			return rand_num
+			return int64(rand_num)
 		}
 	}
-	return rand_num
+	return int64(rand_num)
 }
 
 
@@ -83,7 +123,7 @@ func net_node(channel_id int64){
 	//create a node structure to store information,
 	//successor/predecessor references, etc.
 	/*var node_obj = node.Node {ChannelId: channel_id}
-	var isin_ring = false*/
+	var is_in_ring = false*/
 	for {
 		select {
 			case msg_recv := <-network[channel_id]:
@@ -120,6 +160,21 @@ func cleanup(){
 	}
 }
 
+func print_ring_nodes(){
+	for channel_id, _ := range ring_nodes {
+		fmt.Print("Channel id %s is in the ring", channel_id)
+	}
+}
+
+
+func create_message_list(file_name string) []string {
+	dat, err := ioutil.ReadFile(file_name)
+	check_error(err)
+	data := string(dat)
+	var inst_list []string = strings.Split(data, "\n")
+	return inst_list
+}
+
 func coordinator(prog_args []string){
 
 	var file_name = prog_args[0]
@@ -131,14 +186,29 @@ func coordinator(prog_args []string){
 	init_topology(num_nodes)
 
 	//Send a message
-	var random_node_id = int64(rand.Intn(10))
+	var random_node_id = get_random_network_node(num_nodes)
 	network[random_node_id] <- "{'do':'something'}"
 	//get a list of string json instructions to send to random nodes
-	/*var instructions := create_message_list(file_name)
-	for (i; i< len(instructions); i++){
+	var instructions []string = create_message_list(file_name)
+	for i := 0; i < len(instructions); i++ {
 		//pick_random_net_node() pick a random node on network to send the message to.
-		
-	}*/
+		random_node_id = get_random_ring_node(num_nodes)
+		random_network_id := get_random_network_node(num_nodes)
+		fmt.Println(instructions[i])
+			byte_msg := []byte(instructions[i])
+			var message msg.Message
+			err := json.Unmarshal(byte_msg, &message)
+			check_error(err)
+			//format join ring instruction with random sponsoring node
+			if message.Do == "join-ring" {
+				message.SponsoringNode = string(random_node_id)
+			}
+
+			modified_inst, err := json.Marshal(message)
+			check_error(err)
+			// Tell a random node to join the chord ring
+			network[random_network_id] <- string(modified_inst) 
+	}
 	
 }
 
