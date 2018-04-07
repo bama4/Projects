@@ -32,7 +32,6 @@ Generates a unique channel id that is not already in the network
 */
 func generate_channel_id(max_id int) (rand_num int){
 
-<<<<<<< HEAD
     /*
     var rand_num := 0
     if len(network) == max_id{
@@ -47,7 +46,6 @@ func generate_channel_id(max_id int) (rand_num int){
         }
     }
     */
-=======
 	rand_num = 0
 	if len(network) == max_id {
 		//cant generate a unique id
@@ -64,7 +62,6 @@ func generate_channel_id(max_id int) (rand_num int){
 		}
 	}
 	return rand_num
->>>>>>> project1-master
 }
 
 
@@ -73,7 +70,6 @@ Initializes the network with nodes with random identifiers.
 Creates nodes with random identifiers and adds them to the network map.
 */
 func init_topology(num_nodes int){
-<<<<<<< HEAD
     
     /*
     for i=0; i < num_nodes; i++ {
@@ -84,7 +80,6 @@ func init_topology(num_nodes int){
         go net_node(id)
     }
     */
-=======
 	
 
 	for i:=0; i < num_nodes; i++ {
@@ -99,7 +94,6 @@ func init_topology(num_nodes int){
 		wg.Add(1)
 		go net_node(id_64)
 	}
->>>>>>> project1-master
 }
 
 
@@ -107,7 +101,6 @@ func init_topology(num_nodes int){
 This is a routine that defines a node. The routine listens on the channel that is assigned
 to the given channel id  for incoming messages.
 */
-<<<<<<< HEAD
 /*
 func net_node(channel_id){
     //create a node structure to store information,
@@ -155,7 +148,6 @@ func coordinator(prog_args []string){
     
     
     */
-=======
 func net_node(channel_id int64){
 	
         defer wg.Done()
@@ -219,7 +211,6 @@ func coordinator(prog_args []string){
 		
 	}*/
 	
->>>>>>> project1-master
 }
 
 
@@ -231,7 +222,6 @@ and (TODO) the mean variable to use in the randomization of the node response ti
 */
 func main(){
 
-<<<<<<< HEAD
     var prog_args = os.Args[1:]
         if len(prog_args) < 1 {
         log.Println("USAGE: go run main.go <INSTRUCTION FILE> <NUM NODES>")
@@ -239,7 +229,6 @@ func main(){
     }
 
     //coordinator(prog_args)
-=======
 	var prog_args = os.Args[1:]
 		if len(prog_args) < 1 {
 		fmt.Println("USAGE: go run main.go <INSTRUCTION FILE> <NUM NODES>")
@@ -254,7 +243,6 @@ func main(){
 	wg.Wait()
 	cleanup()
 	return
->>>>>>> project1-master
 }
 
 
