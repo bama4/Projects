@@ -5,19 +5,20 @@ import "strconv"
 import msg "./utils/message_defs"
 import chord "./utils/node_defs"
 
-func join-ring(node_id int, sponsoring_node *chord.Node){
+func join-ring(node_id int, node *chord.Node){
 	
 	// Check global map to see if ring exists
 	// if ring doesn't exist, create new ChordNode
-	if len(chord.ring_nodes) == 0 {
-            sponsoring_node.Predecessor = nil
-            sponsoring_node.Successor = nil
-            chord.ring_nodes[key] = sponsoring_node
+	if ring_nodes == nil {
+            node.Predecessor = nil
+            node.Successor = nil
+            ring_nodes[key] = node
 	}
+	// Add check to see if node id is in map/chord ring
 	else {
-	    sponsoring_node.Predecessor = nil
-	    sponsoring_node.Successor = find_successor()
+	    node.Predecessor = nil
+	    //node.Successor = find_successor()
 	}
 
-	chord.ring_nodes[key] = sponsoring_node
+	ring_nodes[key] = node
 }
