@@ -11,6 +11,7 @@ import "time"
 import "io/ioutil"
 import "strings"
 import "encoding/json"
+//import join "./join_ring"
 
 /*
 This is the global "network" variable which is essentially a
@@ -68,6 +69,7 @@ func get_random_ring_node() (rand_num int64) {
 */
 func create_ring(){
 
+    fmt.Println("Create Ring called")
     if len(ring_nodes) == 0 {
         rand_net_id := get_random_network_node()
         network[rand_net_id] <- "{'do':'create'}"
@@ -132,8 +134,10 @@ func init_topology(){
         go net_node(id_64)
     }
 
+	wg.Wait()
         //randomly add a node to the chord network
-        create_ring()
+       // create_ring()
+
 }
 
 
@@ -148,20 +152,29 @@ func net_node(channel_id int64){
     //successor/predecessor references, etc.
     var node_obj = node.Node {ChannelId: channel_id}
     var is_in_ring = false
+     testchan := network[channel_id]
+     msg_recv := "{'do':'create'}"
 
     for {
         select {
-            case msg_recv := <-network[channel_id]:
+            //case msg_recv := <-network[channel_id]:
 
+	    case testchan <- msg_recv:
                 fmt.Printf("\nNode: %d\n", channel_id)
                 fmt.Println("Message Recieved: ", msg_recv)
-                if msg_recv == "{'do':'create'}" {
-                    //This is the first node to enter the ring. Make this node's successor itself.
-                    node_obj.Successor = &node_obj
-                    ring_nodes[channel_id] = node_obj
-                    is_in_ring = true
-                    fmt.Printf("Node %d is in the ring now. %b", channel_id, is_in_ring)
-                }
+		node_obj.Successor = &node_obj
+		ring_nodes[channel_id] = node_obj
+		is_in_ring = true
+                fmt.Printf("Node %d is in the ring now. %b", channel_id, is_in_ring)
+
+
+/*
+		if msg_recv == "{'do':'join-ring'}" {
+			join.Join_ring(channel_id, &node_obj)
+			fmt.Printf("Node %d has requested to join the ring. %b", channel_id, is_in_ring)
+
+		}
+*/
                 /*
                 //unmarshall string into struct object
                 //based on message do a blocking action
@@ -176,10 +189,10 @@ func net_node(channel_id int64){
                     put(data, respond_to_node_id, node_obj)
                 }...
                 */
-                return
             default:
                 time.Sleep(3)
-                return
+		//network[channel_id] <- "{'do':'something'}"
+                //return
         }
         return
     }
@@ -218,10 +231,11 @@ func coordinator(prog_args []string){
 
     //Create a bunch of random nodes for the network
     init_topology()
+    wg.Wait()
 
     //Send a message
     var random_node_id = get_random_network_node()
-    network[random_node_id] <- "{'do':'something'}"
+    //network[random_node_id] <- "{'do':'something'}"
     //get a list of string json instructions to send to random nodes
     var instructions []string = create_message_list(file_name)
     for i := 0; i < len(instructions); i++ {
@@ -234,7 +248,7 @@ func coordinator(prog_args []string){
             err := json.Unmarshal(byte_msg, &message)
             check_error(err)
             //format join ring instruction with random sponsoring node
-            if message.Do == "join-ring" {
+            if message.Do == "join_ring" {
                 message.SponsoringNode = strconv.FormatInt(random_node_id, 10)
             }
 
@@ -242,7 +256,8 @@ func coordinator(prog_args []string){
             check_error(err)
             fmt.Printf("Instruction in file updated to: %s", string(modified_inst))
             // Tell a random node to join the chord ring
-            network[random_network_id] <- string(modified_inst) 
+            //network[random_network_id] <- string(modified_inst) 
+	    fmt.Println(random_network_id)
     }
     
 }
