@@ -47,45 +47,45 @@ func check_error(err error){
 /*Gets a random node in the chord ring
 */
 func get_random_ring_node() (rand_num int64) {
-	for(true){
-		rand_num := rand.Intn(number_of_network_nodes)
-		//If we generated a channel id that is in use in the ring, return the number
-		fmt.Printf("%d\n", rand_num)
-		if len(ring_nodes) == 0 {
-			fmt.Println("The chord ring is empty")
-			return -1
-		}
-		if val, ok := ring_nodes[int64(rand_num)]; ok {
-			_ = val
-			fmt.Printf("%d\n", rand_num)
-			return int64(rand_num)
-		}
-	}
-	return int64(rand_num)
+    for(true){
+        rand_num := rand.Intn(number_of_network_nodes)
+        //If we generated a channel id that is in use in the ring, return the number
+        fmt.Printf("%d\n", rand_num)
+        if len(ring_nodes) == 0 {
+            fmt.Println("The chord ring is empty")
+            return -1
+        }
+        if val, ok := ring_nodes[int64(rand_num)]; ok {
+            _ = val
+            fmt.Printf("%d\n", rand_num)
+            return int64(rand_num)
+        }
+    }
+    return int64(rand_num)
 }
 
 /*Adds a random node to the ring if the ring is empty
 */
 func create_ring(){
 
-	if len(ring_nodes) == 0 {
-		rand_net_id := get_random_network_node()
-		network[rand_net_id] <- "{'do':'create'}"
-	}
+    if len(ring_nodes) == 0 {
+        rand_net_id := get_random_network_node()
+        network[rand_net_id] <- "{'do':'create'}"
+    }
 }
 
 /*Gets a random node in the network
 */
 func get_random_network_node() (rand_num int64){
-	for(true){
-		rand_num := rand.Intn(number_of_network_nodes)
-		//If we generated a channel id that is in use in the network, return the number
-		if val, ok := network[int64(rand_num)]; ok {
-			_ = val
-			return int64(rand_num)
-		}
-	}
-	return int64(rand_num)
+    for(true){
+        rand_num := rand.Intn(number_of_network_nodes)
+        //If we generated a channel id that is in use in the network, return the number
+        if val, ok := network[int64(rand_num)]; ok {
+            _ = val
+            return int64(rand_num)
+        }
+    }
+    return int64(rand_num)
 }
 
 /*
@@ -188,9 +188,9 @@ func net_node(channel_id int64){
 /*
 /*A function that cleans up after goroutines*/
 func cleanup(){
-	for _, channel := range network {
-		close(channel)
-	}
+    for _, channel := range network {
+        close(channel)
+    }
 }
 
 func print_ring_nodes(){
@@ -280,4 +280,5 @@ func main(){
 	cleanup()
 	return
 }
+
 
