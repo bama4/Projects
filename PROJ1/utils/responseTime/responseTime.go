@@ -1,4 +1,4 @@
-package response_time
+package responsetime
 
 import (
 	"math"
