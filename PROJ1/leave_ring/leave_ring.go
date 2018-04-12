@@ -5,7 +5,7 @@ import "strconv"
 import msg "./utils/message_defs"
 import chord "./utils/node_defs"
 
-func leave-ring(sponsoring_node_id int, node *chord.Node, mode String) {
+func Leave_ring(sponsoring_node_id int, node *chord.Node, mode String) {
 
 	// Leaves orderly or immediate
 
