@@ -125,7 +125,7 @@ func init_topology(){
         fmt.Printf("%d\n", id)
     
         //add node to network
-        network[int64(id)] = make(chan string)    
+        network[int64(id)] = make(chan string, 100)    
         //start up node
         id_64 := int64(id)
         wg.Add(1)
@@ -232,10 +232,19 @@ func coordinator(prog_args []string){
             byte_msg := []byte(instructions[i])
             var message msg.Message
             err := json.Unmarshal(byte_msg, &message)
-            check_error(err)
+            if err != nil {
+                fmt.Println("Reached the end of the json instructions")
+                break
+            }
             //format join ring instruction with random sponsoring node
             if message.Do == "join-ring" {
-                message.SponsoringNode = strconv.FormatInt(random_node_id, 10)
+
+                if random_node_id > 0 {
+                    message.SponsoringNode = strconv.FormatInt(random_node_id, 10)
+                }else{
+                    fmt.Println("There is no node to sponsor for join ring")
+                    continue
+                }
             }
 
             modified_inst, err := json.Marshal(message)
@@ -271,5 +280,6 @@ func main(){
     cleanup()
     return
 }
+
 
 
