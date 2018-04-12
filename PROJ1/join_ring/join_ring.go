@@ -1,6 +1,6 @@
 package join_ring
 
-//import "fmt"
+import "fmt"
 //import "strconv"
 //import msg "../utils/message_defs"
 import chord "../utils/node_defs"
@@ -10,6 +10,7 @@ import chord "../utils/node_defs"
 func Join_ring(sponsoring_node_id int64, node *chord.Node){
 	
     node.Predecessor = nil
+    fmt.Println("join ring called!")
     //node.Successor = find_successor(sponsoring_node_id)
 
 }

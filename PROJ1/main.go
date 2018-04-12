@@ -11,6 +11,7 @@ import "time"
 import "io/ioutil"
 import "strings"
 import "encoding/json"
+//import join "./join_ring"
 
 /*
 This is the global "network" variable which is essentially a
@@ -153,6 +154,19 @@ func net_node(channel_id int64){
         select {
             case msg_recv := <-network[channel_id]:
 
+		struct_msg := node.Node{}
+		struct_err := json.Unmarshal(msg_recv, &struct_msg)
+
+		var action = struct_msg.Do
+		
+		if action == "join-ring" {
+                    fmt.Printf("\nNode: %d\n", channel_id)
+                    fmt.Println("Message Recieved: ", action)
+		    // join.Join_ring(x, y)
+
+		}
+		
+		/*
                 fmt.Printf("\nNode: %d\n", channel_id)
                 fmt.Println("Message Recieved: ", msg_recv)
                 if msg_recv == "{'do':'create'}" {
@@ -162,6 +176,8 @@ func net_node(channel_id int64){
                     is_in_ring = true
                     fmt.Printf("Node %d is in the ring now. %b", channel_id, is_in_ring)
                 }
+		*/
+
                 /*
                 //unmarshall string into struct object
                 //based on message do a blocking action
