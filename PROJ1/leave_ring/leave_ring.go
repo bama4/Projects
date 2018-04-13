@@ -21,6 +21,9 @@ func Leave_ring(sponsoring_node_id int64, node *chord.Node, mode String) {
 		network[sponsoring_node_id] <- "LEAVING"
 		// stuff to dump data to other nodes
 		// Loop through current nodes finger table
+		// Get count of successor finger table
+		// Use that count + 1 as starting index for successor table
+		// Loop and insert fingers at count for successor
 		// append it to successors
 		//node.Successor.FingerTable = node.FingerTable
 	
