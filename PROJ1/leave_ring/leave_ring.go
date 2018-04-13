@@ -10,32 +10,26 @@ func Leave_ring(sponsoring_node_id int64, node *chord.Node, mode String) {
 	// Leaves orderly or immediate
 
 	switch mode { 
-	// Immediate just removes node, doesn't tell neighbors anything
-	case "immediate":
-		node.Predecessor = nil
-		node.Successor = nil
-	// Orderly requires dumping messages to successor before leaving
-	case "orderly:
-		// stuff to tell otehr nodes 
-
-		network[sponsoring_node_id] <- "LEAVING"
-		// stuff to dump data to other nodes
-		// Loop through current nodes finger table
-		// Get count of successor finger table
-		// Use that count + 1 as starting index for successor table
-		// Loop and insert fingers at count for successor
-		// append it to successors
-		//node.Successor.FingerTable = node.FingerTable
+		case "immediate":
+			node.Predecessor = nil
+			node.Successor = nil
+		case "orderly:
+			// stuff to tell otehr nodes 
+			network[sponsoring_node_id] <- "LEAVING"
+			
+			// Loop through nodes fingertable to append to successor
+			for k, v := range node.FingerTable {
+				node.Successor.FingerTable[k] = v
+			}
 	
-		// remove node from ring
-		node.Predecessor = nil
-		node.Successor = nil
-		// dump fingr table to sponsoring node
-		spnosoring_node.FingerTable = node.FingerTable
-	default:
-		// Immediate leave
-		node.Predecessor = nil
-		node.Successor = nil
+			// remove node from ring
+			node.Predecessor = nil
+			node.Successor = nil
+
+		default:
+			// Immediate leave
+			node.Predecessor = nil
+			node.Successor = nil
 	}
 
 }
