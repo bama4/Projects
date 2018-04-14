@@ -12,11 +12,7 @@ import "time"
 import "io/ioutil"
 import "strings"
 import "encoding/json"
-<<<<<<< HEAD
-//import join "./join_ring"
-=======
 import responsetime "./utils/responsetime"
->>>>>>> project1-master
 
 /*
 This is the global "network" variable which is essentially a
@@ -49,19 +45,11 @@ This is the mean time for each node to wait before accepting the next message in
 var mean_wait_value float64
 
 func check_error(err error){
-<<<<<<< HEAD
     if err != nil {
-        fmt.Println("Error : ", err)
+        log.Println("Error : ", err)
         os.Exit(1)
     }
     
-=======
-	if err != nil {
-		log.Println("Error : ", err)
-		os.Exit(1)
-	}
-	
->>>>>>> project1-master
 }
 /*Gets a random node in the chord ring
 */
@@ -137,9 +125,6 @@ func init_topology(){
 
     for i:=0; i < number_of_network_nodes; i++ {
         id := generate_channel_id()
-        
-        fmt.Printf("%d\n", id)
-    
         //add node to network
         network[int64(id)] = make(chan string, 100)    
         //start up node
@@ -148,23 +133,8 @@ func init_topology(){
         go net_node(id_64)
     }
 
-<<<<<<< HEAD
         //randomly add a node to the chord network
-        create_ring()
-=======
-	for i:=0; i < number_of_network_nodes; i++ {
-		id := generate_channel_id()
-		//add node to network
-		network[int64(id)] = make(chan string, 100)	
-		//start up node
-		id_64 := int64(id)
-		wg.Add(1)
-		go net_node(id_64)
-	}
-
-		//randomly add a node to the chord network
-		//create_ring()
->>>>>>> project1-master
+        //create_ring()
 }
 
 
@@ -175,109 +145,52 @@ to the given channel id  for incoming messages.
 func net_node(channel_id int64){
     
         defer wg.Done()
-<<<<<<< HEAD
     //create a node structure to store information,
     //successor/predecessor references, etc.
-    var node_obj = node.Node {ChannelId: channel_id}
-    var is_in_ring = false
+    var node_obj = node.Node {ChannelId: channel_id, Successor:nil, Predecessor:nil}
+    var wait_time = int(responsetime.GetResponseTime(mean_wait_value))
 
+    //If ring is empty just add this node to the ring
+    //This is the first node to enter the ring. Make this node's successor itself.
+    //create
+    if len(ring_nodes) == 0{
+    node_obj.Successor = &node_obj
+    ring_nodes[channel_id] = node_obj
+    log.Printf("Node %d was used to create the ring.", channel_id)
+    }
     for {
         select {
-            case msg_recv := <-network[channel_id]:
+            case <-time.After(time.Duration(wait_time) * time.Second):
+                msg_recv := <-network[channel_id]
+                //wait an average of AVERAGE_WAIT_TIME seconds before accepting a message
+                log.Printf("\nWaiting %d seconds before processing message for Node: %d\n", wait_time, channel_id)
+                wait_time = int(responsetime.GetResponseTime(mean_wait_value))
+                time.Sleep(time.Duration(wait_time) * time.Second)
+                log.Printf("\nNode: %d recieved the following message:%s\n", channel_id, msg_recv)
 
-		struct_msg := node.Node{}
-		struct_err := json.Unmarshal(msg_recv, &struct_msg)
-
-		var action = struct_msg.Do
-		
-		if action == "join-ring" {
-                    fmt.Printf("\nNode: %d\n", channel_id)
-                    fmt.Println("Message Recieved: ", action)
-		    // join.Join_ring(x, y)
-
-		}
-		
-		/*
-                fmt.Printf("\nNode: %d\n", channel_id)
-                fmt.Println("Message Recieved: ", msg_recv)
-                if msg_recv == "{'do':'create'}" {
-                    //This is the first node to enter the ring. Make this node's successor itself.
-                    node_obj.Successor = &node_obj
-                    ring_nodes[channel_id] = node_obj
-                    is_in_ring = true
-                    fmt.Printf("Node %d is in the ring now. %b", channel_id, is_in_ring)
+                byte_msg := []byte(msg_recv)
+                var message msg.Message
+                err := json.Unmarshal(byte_msg, &message)
+                if err != nil {
+                    log.Printf("Node: %d failed to unmarshal the json string", channel_id)
+                    break
                 }
-		*/
 
-                /*
-                //unmarshall string into struct object
-                //based on message do a blocking action
-                //struct_message = json.UnMarshall(msg_recv)
-                //var action = struct_message.Do
-                if action == "join"{
-                    sponsoring_node_id = struct_message.SponsoringNode
-                    join(sponsoring_node_id, node_obj)
-                   } else if (action == "put"){
+                //Perform join-ring action
+                if message.Do == "join-ring"{
+                    sponsoring_node_id := message.SponsoringNode
+                    join.Join_ring(sponsoring_node_id, &node_obj)
+                   } /*else if (message.Do == "put"){
                     respond_to_node_id = struct_message.RespondTo
-                    data = struct_message.Data
+                    data  = struct_message.Data
                     put(data, respond_to_node_id, node_obj)
                 }...
                 */
-                return
             default:
-                time.Sleep(3)
-                return
+                time.Sleep(1)
+                continue
         }
-        return
     }
-=======
-	//create a node structure to store information,
-	//successor/predecessor references, etc.
-	var node_obj = node.Node {ChannelId: channel_id, Successor:nil, Predecessor:nil}
-	var wait_time = int(responsetime.GetResponseTime(mean_wait_value))
-
-	//If ring is empty just add this node to the ring
-	//This is the first node to enter the ring. Make this node's successor itself.
-	//create
-	if len(ring_nodes) == 0{
-	node_obj.Successor = &node_obj
-	ring_nodes[channel_id] = node_obj
-	log.Printf("Node %d was used to create the ring.", channel_id)
-	}
-	for {
-		select {
-			case <-time.After(time.Duration(wait_time) * time.Second):
-				msg_recv := <-network[channel_id]
-				//wait an average of AVERAGE_WAIT_TIME seconds before accepting a message
-				log.Printf("\nWaiting %d seconds before processing message for Node: %d\n", wait_time, channel_id)
-				wait_time = int(responsetime.GetResponseTime(mean_wait_value))
-				time.Sleep(time.Duration(wait_time) * time.Second)
-				log.Printf("\nNode: %d recieved the following message:%s\n", channel_id, msg_recv)
-
-				byte_msg := []byte(msg_recv)
-				var message msg.Message
-				err := json.Unmarshal(byte_msg, &message)
-				if err != nil {
-					log.Printf("Node: %d failed to unmarshal the json string", channel_id)
-					break
-				}
-
-				//Perform join-ring action
-				if message.Do == "join-ring"{
-					sponsoring_node_id := message.SponsoringNode
-					join.Join_ring(sponsoring_node_id, &node_obj)
-			   	} /*else if (message.Do == "put"){
-					respond_to_node_id = struct_message.RespondTo
-					data  = struct_message.Data
-					put(data, respond_to_node_id, node_obj)
-				}...
-				*/
-			default:
-				time.Sleep(1)
-				continue
-		}
-	}
->>>>>>> project1-master
 }
 
 /*
@@ -289,15 +202,9 @@ func cleanup(){
 }
 
 func print_ring_nodes(){
-<<<<<<< HEAD
     for channel_id, _ := range ring_nodes {
-        fmt.Print("Channel id %s is in the ring", channel_id)
+        log.Printf("Channel id %s is in the ring", channel_id)
     }
-=======
-	for channel_id, _ := range ring_nodes {
-		log.Printf("Channel id %s is in the ring", channel_id)
-	}
->>>>>>> project1-master
 }
 
 /*
@@ -313,100 +220,53 @@ func create_message_list(file_name string) []string {
 
 func coordinator(prog_args []string){
 
-<<<<<<< HEAD
     var file_name = prog_args[0]
     _ = file_name
     var num_nodes, _ = strconv.Atoi(prog_args[1])
+    mean_wait, err := strconv.ParseFloat(prog_args[2], 64)
+    check_error(err)
+    mean_wait_value = mean_wait
     number_of_network_nodes = num_nodes
-    fmt.Println("This is the coordinator.")
+    log.Println("This is the coordinator.")
 
     //Create a bunch of random nodes for the network
     init_topology()
 
-    //Send a message
-    var random_node_id = get_random_network_node()
-    network[random_node_id] <- "{'do':'something'}"
+    //Get a random network nodes id
+    var random_node_id int64
+
     //get a list of string json instructions to send to random nodes
     var instructions []string = create_message_list(file_name)
     for i := 0; i < len(instructions); i++ {
-        //pick_random_net_node() pick a random node on network to send the message to.
+        //pick a random node in the ring to send the message to.
         random_node_id = get_random_ring_node()
         random_network_id := get_random_network_node()
-        fmt.Printf("Read the following instruction from file %s", instructions[i])
+        log.Printf("Read the following instruction from file %s. Random node: %d", instructions[i], random_node_id)
             byte_msg := []byte(instructions[i])
             var message msg.Message
             err := json.Unmarshal(byte_msg, &message)
             if err != nil {
-                fmt.Println("Reached the end of the json instructions")
+                log.Println("Reached the end of the json instructions")
                 break
             }
             //format join ring instruction with random sponsoring node
             if message.Do == "join-ring" {
 
                 if random_node_id > 0 {
-                    message.SponsoringNode = strconv.FormatInt(random_node_id, 10)
+                    message.SponsoringNode = random_node_id
                 }else{
-                    fmt.Println("There is no node to sponsor for join ring")
+                    log.Println("There is no node to sponsor for join ring: %d")
                     continue
                 }
             }
 
             modified_inst, err := json.Marshal(message)
             check_error(err)
-            fmt.Printf("Instruction in file updated to: %s", string(modified_inst))
-            // Tell a random node to join the chord ring
+            // Give a random node instructions 
+            log.Println("\nNode sent\n")
             network[random_network_id] <- string(modified_inst) 
     }
     
-=======
-	var file_name = prog_args[0]
-	_ = file_name
-	var num_nodes, _ = strconv.Atoi(prog_args[1])
-	mean_wait, err := strconv.ParseFloat(prog_args[2], 64)
-	check_error(err)
-	mean_wait_value = mean_wait
-	number_of_network_nodes = num_nodes
-	log.Println("This is the coordinator.")
-
-	//Create a bunch of random nodes for the network
-	init_topology()
-
-	//Get a random network nodes id
-	var random_node_id int64
-
-	//get a list of string json instructions to send to random nodes
-	var instructions []string = create_message_list(file_name)
-	for i := 0; i < len(instructions); i++ {
-		//pick a random node in the ring to send the message to.
-		random_node_id = get_random_ring_node()
-		random_network_id := get_random_network_node()
-		log.Printf("Read the following instruction from file %s. Random node: %d", instructions[i], random_node_id)
-			byte_msg := []byte(instructions[i])
-			var message msg.Message
-			err := json.Unmarshal(byte_msg, &message)
-			if err != nil {
-				log.Println("Reached the end of the json instructions")
-				break
-			}
-			//format join ring instruction with random sponsoring node
-			if message.Do == "join-ring" {
-
-				if random_node_id > 0 {
-					message.SponsoringNode = random_node_id
-				}else{
-					log.Println("There is no node to sponsor for join ring: %d")
-					continue
-				}
-			}
-
-			modified_inst, err := json.Marshal(message)
-			check_error(err)
-			// Give a random node instructions 
-			log.Println("\nNode sent\n")
-			network[random_network_id] <- string(modified_inst) 
-	}
-	
->>>>>>> project1-master
 }
 
 
@@ -418,19 +278,11 @@ and (TODO) the mean variable to use in the randomization of the node response ti
 */
 func main(){
 
-<<<<<<< HEAD
     var prog_args = os.Args[1:]
-        if len(prog_args) < 1 {
-        fmt.Println("USAGE: go run main.go <INSTRUCTION FILE> <NUM NODES>")
+        if len(prog_args) < 3 {
+        log.Println("USAGE: go run main.go <INSTRUCTION FILE> <NUM NODES> <AVERAGE_WEIGHT_TIME>")
         os.Exit(1)
     }
-=======
-	var prog_args = os.Args[1:]
-		if len(prog_args) < 3 {
-		log.Println("USAGE: go run main.go <INSTRUCTION FILE> <NUM NODES> <AVERAGE_WEIGHT_TIME>")
-		os.Exit(1)
-	}
->>>>>>> project1-master
 
     //Set up random generator seed
     rand.Seed(time.Now().UTC().UnixNano())
