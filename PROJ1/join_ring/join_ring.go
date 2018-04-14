@@ -10,7 +10,11 @@ import chord "../utils/node_defs"
 func Join_ring(sponsoring_node_id int64, node *chord.Node){
 	
     node.Predecessor = nil
+<<<<<<< HEAD
     fmt.Println("join ring called!")
+=======
+    fmt.Printf("Node %d is joining the ring now", sponsoring_node_id)
+>>>>>>> project1-master
     //node.Successor = find_successor(sponsoring_node_id)
 
 }
