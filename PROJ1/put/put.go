@@ -10,7 +10,9 @@ import node "./utils/node_defs"
 func Put(data *msg.Data, respond_to int64) {
 
 	// Node gets data 
-	node.Data = data
+	ring_nodes[respond_to].Data = data
+
+	// network[respond_to] <- "Put"
 
 
 }
