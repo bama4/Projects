@@ -220,7 +220,8 @@ func net_node(channel_id int64){
 					put(data, respond_to_node_id, node_obj)
 				}...
 				*/
-				//print_ring_nodes()
+				print_ring_nodes()
+				print_node(node_obj)
 			default:
 				time.Sleep(1)
 				continue
@@ -237,9 +238,38 @@ func cleanup(){
 }
 
 func print_ring_nodes(){
+	log.Println("+++LIST OF NODES CURRENTLY IN THE RING+++")
 	for channel_id, _ := range ring_nodes {
 		log.Printf("\nNode %d is in the ring\n", channel_id)
 	}
+	log.Println("+++END OF LIST OF NODES CURRENTLY IN THE RING+++")
+}
+
+func print_node(node_obj node.Node){
+log.Printf("\n+++Contents of Node %d+++\n", node_obj.ChannelId)
+log.Printf("Channel Id/Node Id: %d\n", node_obj.ChannelId)
+log.Printf("+FingerTable+: nil\n")
+if node_obj.FingerTable != nil {
+    for node_id, node_entry := range node_obj.FingerTable {
+        if node_entry != nil {
+		log.Printf("Finger Table entry %d is occupied\n", node_id)		
+	}
+    }
+}
+
+if node_obj.Successor != nil {
+	log.Printf("Successor Id: %d\n", node_obj.Successor.ChannelId)
+}else{
+	log.Printf("Successor Id: nil\n")
+}
+
+if node_obj.Predecessor != nil {
+	log.Printf("Predecessor Id: %d\n", node_obj.Predecessor.ChannelId)
+}else{
+	log.Printf("Predecessor Id: nil\n")
+}
+log.Printf("\n+++END of Contents of Node %d+++\n", node_obj.ChannelId)
+	
 }
 
 /*

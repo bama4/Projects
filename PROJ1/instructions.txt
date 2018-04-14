@@ -1,9 +1,13 @@
 {"do":"join-ring"}
 {"do":"join-ring"}
 {"do":"join-ring"}
-{"do":"leave-ring", "mode":"immediately"}
 {"do":"join-ring"}
 {"do":"join-ring"}
+{"do":"init-ring-fingers"}
+{"do":"init-ring-fingers"}
+{"do":"init-ring-fingers"}
+{"do":"init-ring-fingers"}
+{"do":"init-ring-fingers"}
 {"do":"join-ring"}
 {"do":"join-ring"}
 {"do":"join-ring"}
