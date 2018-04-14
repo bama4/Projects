@@ -72,7 +72,6 @@ func get_random_ring_node() (rand_num int64) {
 /*Adds a random node to the ring if the ring is empty
 */
 func create_ring(){
-
     if len(ring_nodes) == 0 {
         rand_net_id := get_random_network_node()
         network[rand_net_id] <- "{\"do\":\"create\"}"
@@ -135,7 +134,7 @@ func init_topology(){
 	}
 
 		//randomly add a node to the chord network
-		create_ring()
+		//create_ring()
 }
 
 
@@ -150,6 +149,15 @@ func net_node(channel_id int64){
 	//successor/predecessor references, etc.
 	var node_obj = node.Node {ChannelId: channel_id, Successor:nil, Predecessor:nil}
 	var wait_time = int(responsetime.GetResponseTime(mean_wait_value))
+
+	//If ring is empty just add this node to the ring
+	//This is the first node to enter the ring. Make this node's successor itself.
+	//create
+	if len(ring_nodes) == 0{
+	node_obj.Successor = &node_obj
+	ring_nodes[channel_id] = node_obj
+	log.Printf("Node %d was used to create the ring.", channel_id)
+	}
 	for {
 		select {
 			case <-time.After(time.Duration(wait_time) * time.Second):
@@ -158,8 +166,7 @@ func net_node(channel_id int64){
 				log.Printf("\nWaiting %d seconds before processing message for Node: %d\n", wait_time, channel_id)
 				wait_time = int(responsetime.GetResponseTime(mean_wait_value))
 				time.Sleep(time.Duration(wait_time) * time.Second)
-				log.Printf("\nNode: %d\n", channel_id)
-				log.Println("Message Recieved: ", msg_recv)
+				log.Printf("\nNode: %d recieved the following message:%s\n", channel_id, msg_recv)
 
 				byte_msg := []byte(msg_recv)
 				var message msg.Message
@@ -169,13 +176,8 @@ func net_node(channel_id int64){
 					break
 				}
 
-				//Perform create action
-				if message.Do == "create" {
-					//This is the first node to enter the ring. Make this node's successor itself.
-					node_obj.Successor = &node_obj
-					ring_nodes[channel_id] = node_obj
-					log.Printf("Node %d is in the ring now.", channel_id)
-				}else if message.Do == "join-ring"{
+				//Perform join-ring action
+				if message.Do == "join-ring"{
 					sponsoring_node_id := message.SponsoringNode
 					join.Join_ring(sponsoring_node_id, &node_obj)
 			   	} /*else if (message.Do == "put"){
@@ -185,7 +187,7 @@ func net_node(channel_id int64){
 				}...
 				*/
 			default:
-				//time.Sleep(5)
+				time.Sleep(1)
 				continue
 		}
 	}
