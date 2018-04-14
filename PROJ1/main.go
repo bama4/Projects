@@ -138,17 +138,25 @@ func net_node(channel_id int64){
         defer wg.Done()
 	//create a node structure to store information,
 	//successor/predecessor references, etc.
-	var node_obj = node.Node {ChannelId: channel_id, Successor:nil, Predecessor:nil}
+	//Initializing finger and datatable
+	var node_obj = node.Node {ChannelId: channel_id,
+				   Successor:nil,
+				   Predecessor:nil,
+				   FingerTable:make(map[int64]*node.Node),
+				   DataTable:make(map[string]string)}
+
 	var wait_time = int(responsetime.GetResponseTime(mean_wait_value))
 
 	//If ring is empty just add this node to the ring
 	//This is the first node to enter the ring. Make this node's successor itself.
 	//create
 	if len(ring_nodes) == 0{
-	node_obj.Successor = &node_obj
-	ring_nodes[channel_id] = &node_obj
-	log.Printf("Node %d was used to create the ring.", channel_id)
+		node_obj.Successor = &node_obj
+		ring_nodes[channel_id] = &node_obj
+		log.Printf("Node %d was used to create the ring.", channel_id)
 	}
+
+	
 	for {
 		select {
 			case <-time.After(time.Duration(wait_time) * time.Second):
