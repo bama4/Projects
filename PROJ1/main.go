@@ -6,6 +6,7 @@ import "strconv"
 import node "./utils/node_defs"
 import msg "./utils/message_defs"
 import join "./join_ring"
+import leave "./leave_ring"
 import "math/rand"
 import "sync"
 import "time"
@@ -69,15 +70,6 @@ func get_random_ring_node() (rand_num int64) {
     return int64(rand_num)
 }
 
-/*Adds a random node to the ring if the ring is empty
-*/
-func create_ring(){
-    if len(ring_nodes) == 0 {
-        rand_net_id := get_random_network_node()
-        network[rand_net_id] <- "{\"do\":\"create\"}"
-    }
-}
-
 /*Gets a random node in the network
 */
 func get_random_network_node() (rand_num int64){
@@ -132,10 +124,8 @@ func init_topology(){
 		wg.Add(1)
 		go net_node(id_64)
 	}
-
-		//randomly add a node to the chord network
-		//create_ring()
 }
+
 
 
 /*
@@ -177,10 +167,24 @@ func net_node(channel_id int64){
 				}
 
 				//Perform join-ring action
-				if message.Do == "join-ring"{
-					sponsoring_node_id := message.SponsoringNode
-					join.Join_ring(sponsoring_node_id, &node_obj)
-			   	} /*else if (message.Do == "put"){
+				if message.Do == "join-ring" {
+					if val, ok := ring_nodes[channel_id]; ok != true {
+						_ = val
+						sponsoring_node_id := message.SponsoringNode
+						join.Join_ring(sponsoring_node_id, &node_obj)
+					}else{
+						log.Printf("\nNode %d is already in the ring; cannot join-ring\n", channel_id)
+					}
+			   	} else if message.Do == "leave-ring" {
+					if val, ok := ring_nodes[channel_id]; ok{
+						_ = val
+						leave.Leave_ring(&node_obj, message.Mode)
+					}else{
+						log.Printf("\nNode %d is not in the ring; cannot leave-ring\n", channel_id)
+					}
+				}
+
+				/*else if (message.Do == "put"){
 					respond_to_node_id = struct_message.RespondTo
 					data  = struct_message.Data
 					put(data, respond_to_node_id, node_obj)
@@ -263,7 +267,6 @@ func coordinator(prog_args []string){
 			modified_inst, err := json.Marshal(message)
 			check_error(err)
 			// Give a random node instructions 
-			log.Println("\nNode sent\n")
 			network[random_network_id] <- string(modified_inst) 
 	}
 	
