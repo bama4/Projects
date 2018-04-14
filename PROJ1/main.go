@@ -151,11 +151,12 @@ func net_node(channel_id int64){
 				   DataTable:make(map[string]string)}
 
 	var wait_time = int(responsetime.GetResponseTime(mean_wait_value))
-
+	//Initialize table to size 64
+	init_ring_fingers.Init_Ring_Fingers(&node_obj)
 	//If ring is empty just add this node to the ring
 	//This is the first node to enter the ring. Make this node's successor itself.
 	//create
-	if len(ring_nodes) == 0{
+	if len(ring_nodes) == 0 {
 		node_obj.Successor = &node_obj
 		map_lock.Lock()
 		ring_nodes[channel_id] = &node_obj
@@ -203,13 +204,6 @@ func net_node(channel_id int64){
 						map_lock.Unlock()
 					}else{
 						log.Printf("\nNode %d is not in the ring; cannot leave-ring\n", channel_id)
-					}
-				}else if message.Do == "init-ring-fingers" {
-					if val, ok := ring_nodes[channel_id]; ok{
-						_ = val
-						init_ring_fingers.Init_Ring_Fingers(&node_obj)
-					}else{
-						log.Printf("\nNode %d is not in the ring; cannot init-ring-fingers\n", channel_id)
 					}
 				}
 
