@@ -1,6 +1,5 @@
 package message_defs
 
-
 /*
 This struct defines the json messages for the
 CHORD protocol.
@@ -13,14 +12,15 @@ respond_to - The node (represented as a channel id) to direct the given action t
 data - The key/value pair in the ring representing a hash entry.
 */
 type Message struct {
-	Do string `json:"do"`
-	SponsoringNode int64 `json:"sponsoring_node"`
-	Mode string `json:"mode"`
-	RespondTo string `json:"respond_to"`
-	Data Data `json:"data"`
+	Do             string `json:"do"`
+	SponsoringNode string  `json:"sponsoring-node"`
+	Mode           string `json:"mode"`
+	RespondTo      string `json:"respond-to"`
+	Data           Data   `json:"data"`
+	TargetID       string  `json:"target-id"`
 }
 
 type Data struct {
-	Key string `json:"string"`
+	Key   string `json:"string"`
 	Value string `json:"string"`
 }
