@@ -18,7 +18,7 @@ func Init_Ring_Fingers(node *chord.Node){
 		for i:=0; i < 64; i++ {
 			//Should have 64 entries that increment in i + 2^i
 			map_lock.Lock()
-			node.FingerTable[int64(i) + int64(math.Pow(2.0, float64(i)))] = nil
+			node.FingerTable[int64(i)] = nil
 			map_lock.Unlock()
 		}
 	}
