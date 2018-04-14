@@ -7,6 +7,7 @@ import node "./utils/node_defs"
 import msg "./utils/message_defs"
 import join "./join_ring"
 import leave "./leave_ring"
+import init_ring_fingers "./init_ring_fingers"
 import "math/rand"
 import "sync"
 import "time"
@@ -27,7 +28,7 @@ var network = make(map[int64](chan string))
 /*
 This is a map that consists of all of the nodes that are in the Chord ring
 */
-var ring_nodes = make(map[int64](node.Node))
+var ring_nodes = make(map[int64](*node.Node))
 
 /*
 This is the global sync group to handle the goroutines properly
@@ -145,7 +146,7 @@ func net_node(channel_id int64){
 	//create
 	if len(ring_nodes) == 0{
 	node_obj.Successor = &node_obj
-	ring_nodes[channel_id] = node_obj
+	ring_nodes[channel_id] = &node_obj
 	log.Printf("Node %d was used to create the ring.", channel_id)
 	}
 	for {
@@ -172,6 +173,7 @@ func net_node(channel_id int64){
 						_ = val
 						sponsoring_node_id := message.SponsoringNode
 						join.Join_ring(sponsoring_node_id, &node_obj)
+						ring_nodes[channel_id] = &node_obj
 					}else{
 						log.Printf("\nNode %d is already in the ring; cannot join-ring\n", channel_id)
 					}
@@ -179,8 +181,16 @@ func net_node(channel_id int64){
 					if val, ok := ring_nodes[channel_id]; ok{
 						_ = val
 						leave.Leave_ring(&node_obj, message.Mode)
+						delete(ring_nodes, channel_id)
 					}else{
 						log.Printf("\nNode %d is not in the ring; cannot leave-ring\n", channel_id)
+					}
+				}else if message.Do == "init-ring-fingers" {
+					if val, ok := ring_nodes[channel_id]; ok{
+						_ = val
+						init_ring_fingers.Init_Ring_Fingers(&node_obj)
+					}else{
+						log.Printf("\nNode %d is not in the ring; cannot init-ring-fingers\n", channel_id)
 					}
 				}
 
@@ -190,6 +200,7 @@ func net_node(channel_id int64){
 					put(data, respond_to_node_id, node_obj)
 				}...
 				*/
+				//print_ring_nodes()
 			default:
 				time.Sleep(1)
 				continue
@@ -207,7 +218,7 @@ func cleanup(){
 
 func print_ring_nodes(){
 	for channel_id, _ := range ring_nodes {
-		log.Printf("Channel id %s is in the ring", channel_id)
+		log.Printf("\nNode %d is in the ring\n", channel_id)
 	}
 }
 
@@ -245,7 +256,6 @@ func coordinator(prog_args []string){
 		//pick a random node in the ring to send the message to.
 		random_node_id = get_random_ring_node()
 		random_network_id := get_random_network_node()
-		log.Printf("Read the following instruction from file %s. Random node: %d", instructions[i], random_node_id)
 			byte_msg := []byte(instructions[i])
 			var message msg.Message
 			err := json.Unmarshal(byte_msg, &message)
@@ -265,6 +275,7 @@ func coordinator(prog_args []string){
 			}
 
 			modified_inst, err := json.Marshal(message)
+			log.Printf("Read the following instruction from file %s.", string(modified_inst))
 			check_error(err)
 			// Give a random node instructions 
 			network[random_network_id] <- string(modified_inst) 
