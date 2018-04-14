@@ -16,11 +16,11 @@ type Message struct {
 	Do string `json:"do"`
 	SponsoringNode int64 `json:"sponsoring_node"`
 	Mode string `json:"mode"`
-	RespondTo string `json:"respond_to"`
+	RespondTo int64 `json:"respond_to"`
 	Data Data `json:"data"`
 }
 
 type Data struct {
 	Key string `json:"string"`
 	Value string `json:"string"`
-}
+}tring
