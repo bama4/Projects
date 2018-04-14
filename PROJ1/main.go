@@ -171,8 +171,8 @@ func net_node(channel_id int64){
 				if message.Do == "join-ring" {
 					if val, ok := ring_nodes[channel_id]; ok != true {
 						_ = val
-						sponsoring_node_id := message.SponsoringNode
-						join.Join_ring(sponsoring_node_id, &node_obj)
+						sponsoring_node_id,_ := strconv.Atoi(message.SponsoringNode)
+						join.Join_ring(int64(sponsoring_node_id), &node_obj)
 						ring_nodes[channel_id] = &node_obj
 					}else{
 						log.Printf("\nNode %d is already in the ring; cannot join-ring\n", channel_id)
@@ -267,7 +267,7 @@ func coordinator(prog_args []string){
 			if message.Do == "join-ring" {
 
 				if random_node_id > 0 {
-					message.SponsoringNode = random_node_id
+					message.SponsoringNode = string(random_node_id)
 				}else{
 					log.Println("There is no node to sponsor for join ring: %d")
 					continue
