@@ -13,11 +13,11 @@ data - The key/value pair in the ring representing a hash entry.
 */
 type Message struct {
 	Do             string `json:"do"`
-	SponsoringNode string  `json:"sponsoring-node"`
+	SponsoringNode int64  `json:"sponsoring-node"`
 	Mode           string `json:"mode"`
-	RespondTo      string `json:"respond-to"`
+	RespondTo      int64 `json:"respond-to"`
 	Data           Data   `json:"data"`
-	TargetID       string  `json:"target-id"`
+	TargetID       int64  `json:"target-id"`
 }
 
 type Data struct {
