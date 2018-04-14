@@ -19,7 +19,7 @@ func FindSuccessor(sponsoringNode *nodeDefs.Node, targetID int64, totalNodes int
 
 func findClosestPrecedingNode(sponsoringNode *nodeDefs.Node, targetID int64, totalNodes int) (precedingNode *nodeDefs.Node) {
 
-	for i := int(math.Log2(float64(totalNodes))); i >= 0; i-- {
+	for i := int(math.Log2(float64(totalNodes))) - 1; i >= 0; i-- {
 		if sponsoringNode.FingerTable[int64(i)].ChannelId > sponsoringNode.ChannelId && sponsoringNode.FingerTable[int64(i)].ChannelId < targetID {
 			precedingNode = sponsoringNode.FingerTable[int64(i)]
 		}
