@@ -14,7 +14,7 @@ data - The key/value pair in the ring representing a hash entry.
 */
 type Message struct {
 	Do string `json:"do"`
-	SponsoringNode string `json:"sponsoring_node"`
+	SponsoringNode int64 `json:"sponsoring_node"`
 	Mode string `json:"mode"`
 	RespondTo string `json:"respond_to"`
 	Data Data `json:"data"`

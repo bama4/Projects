@@ -1,11 +1,9 @@
 package leave_ring
 
-import "fmt"
-import "strconv"
-import msg "./utils/message_defs"
-import chord "./utils/node_defs"
+import "log"
+import chord "../utils/node_defs"
 
-func Leave_ring(sponsoring_node_id int64, node *chord.Node, mode String) {
+func Leave_ring(node *chord.Node, mode string) {
 
 	// Leaves orderly or immediate
 
@@ -14,9 +12,12 @@ func Leave_ring(sponsoring_node_id int64, node *chord.Node, mode String) {
 			node.Predecessor = nil
 			node.Successor = nil
 			node.FingerTable = nil
-		case "orderly:
-			// stuff to tell otehr nodes 
-			network[node.Successor.ChannelId] <- "LEAVING"
+			log.Printf("\nNode: %d is leaving immediately\n", node.ChannelId)
+			
+		case "orderly":
+			log.Printf("\nNode: %d is leaving orderly\n", node.ChannelId)
+			// stuff to tell other nodes
+			
 			
 			// Loop through nodes fingertable to append to successor
 			for k, v := range node.FingerTable {
