@@ -34,6 +34,7 @@ func Leave_ring(node *chord.Node, mode string) {
 			node.Predecessor = nil
 			node.Successor = nil
 			node.FingerTable = nil
+			log.Printf("\nNode: %d is leaving immediately\n", node.ChannelId)
 	}
 
 }

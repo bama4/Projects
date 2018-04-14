@@ -35,6 +35,10 @@ This is the global sync group to handle the goroutines properly
 */
 var wg sync.WaitGroup
 
+/*This is a lock that should eb used when writing to maps
+*/
+var map_lock = sync.Mutex{}
+
 
 /*
 This is the number of nodes in the ring
@@ -119,7 +123,9 @@ func init_topology(){
 	for i:=0; i < number_of_network_nodes; i++ {
 		id := generate_channel_id()
 		//add node to network
-		network[int64(id)] = make(chan string, 100)	
+		map_lock.Lock()
+		network[int64(id)] = make(chan string, 100)
+		map_lock.Unlock()
 		//start up node
 		id_64 := int64(id)
 		wg.Add(1)
@@ -138,17 +144,26 @@ func net_node(channel_id int64){
         defer wg.Done()
 	//create a node structure to store information,
 	//successor/predecessor references, etc.
-	var node_obj = node.Node {ChannelId: channel_id, Successor:nil, Predecessor:nil}
+	//Initializing finger and datatable
+	var node_obj = node.Node {ChannelId: channel_id,
+				   Successor:nil,
+				   Predecessor:nil,
+				   FingerTable:make(map[int64]*node.Node),
+				   DataTable:make(map[string]string)}
+
 	var wait_time = int(responsetime.GetResponseTime(mean_wait_value))
 
 	//If ring is empty just add this node to the ring
 	//This is the first node to enter the ring. Make this node's successor itself.
 	//create
 	if len(ring_nodes) == 0{
-	node_obj.Successor = &node_obj
-	ring_nodes[channel_id] = &node_obj
-	log.Printf("Node %d was used to create the ring.", channel_id)
+		node_obj.Successor = &node_obj
+		map_lock.Lock()
+		ring_nodes[channel_id] = &node_obj
+		map_lock.Unlock()
+		log.Printf("Node %d was used to create the ring.", channel_id)
 	}
+
 	for {
 		select {
 			case <-time.After(time.Duration(wait_time) * time.Second):
@@ -173,7 +188,10 @@ func net_node(channel_id int64){
 						_ = val
 						sponsoring_node_id := message.SponsoringNode
 						join.Join_ring(sponsoring_node_id, &node_obj)
+
+						map_lock.Lock()
 						ring_nodes[channel_id] = &node_obj
+						map_lock.Unlock()
 					}else{
 						log.Printf("\nNode %d is already in the ring; cannot join-ring\n", channel_id)
 					}
@@ -181,7 +199,9 @@ func net_node(channel_id int64){
 					if val, ok := ring_nodes[channel_id]; ok{
 						_ = val
 						leave.Leave_ring(&node_obj, message.Mode)
+						map_lock.Lock()
 						delete(ring_nodes, channel_id)
+						map_lock.Unlock()
 					}else{
 						log.Printf("\nNode %d is not in the ring; cannot leave-ring\n", channel_id)
 					}
@@ -200,7 +220,8 @@ func net_node(channel_id int64){
 					put(data, respond_to_node_id, node_obj)
 				}...
 				*/
-				//print_ring_nodes()
+				print_ring_nodes()
+				print_node(node_obj)
 			default:
 				time.Sleep(1)
 				continue
@@ -217,9 +238,38 @@ func cleanup(){
 }
 
 func print_ring_nodes(){
+	log.Println("+++LIST OF NODES CURRENTLY IN THE RING+++")
 	for channel_id, _ := range ring_nodes {
 		log.Printf("\nNode %d is in the ring\n", channel_id)
 	}
+	log.Println("+++END OF LIST OF NODES CURRENTLY IN THE RING+++")
+}
+
+func print_node(node_obj node.Node){
+log.Printf("\n+++Contents of Node %d+++\n", node_obj.ChannelId)
+log.Printf("Channel Id/Node Id: %d\n", node_obj.ChannelId)
+log.Printf("+FingerTable+: nil\n")
+if node_obj.FingerTable != nil {
+    for node_id, node_entry := range node_obj.FingerTable {
+        if node_entry != nil {
+		log.Printf("Finger Table entry %d is occupied\n", node_id)		
+	}
+    }
+}
+
+if node_obj.Successor != nil {
+	log.Printf("Successor Id: %d\n", node_obj.Successor.ChannelId)
+}else{
+	log.Printf("Successor Id: nil\n")
+}
+
+if node_obj.Predecessor != nil {
+	log.Printf("Predecessor Id: %d\n", node_obj.Predecessor.ChannelId)
+}else{
+	log.Printf("Predecessor Id: nil\n")
+}
+log.Printf("\n+++END of Contents of Node %d+++\n", node_obj.ChannelId)
+	
 }
 
 /*
@@ -247,14 +297,15 @@ func coordinator(prog_args []string){
 	//Create a bunch of random nodes for the network
 	init_topology()
 
-	//Get a random network nodes id
-	var random_node_id int64
+	//Get a random ring nodes id
+	var random_ring_id int64
 
 	//get a list of string json instructions to send to random nodes
 	var instructions []string = create_message_list(file_name)
+	var channel_id int64
 	for i := 0; i < len(instructions); i++ {
 		//pick a random node in the ring to send the message to.
-		random_node_id = get_random_ring_node()
+		random_ring_id = get_random_ring_node()
 		random_network_id := get_random_network_node()
 			byte_msg := []byte(instructions[i])
 			var message msg.Message
@@ -266,19 +317,24 @@ func coordinator(prog_args []string){
 			//format join ring instruction with random sponsoring node
 			if message.Do == "join-ring" {
 
-				if random_node_id > 0 {
-					message.SponsoringNode = random_node_id
+				if random_ring_id > 0 {
+					message.SponsoringNode = random_ring_id
 				}else{
-					log.Println("There is no node to sponsor for join ring: %d")
+					log.Println("There is no node to sponsor for join ring")
 					continue
 				}
+				channel_id = random_network_id
+
+			}else{
+				channel_id = random_ring_id
+
 			}
 
 			modified_inst, err := json.Marshal(message)
 			log.Printf("Read the following instruction from file %s.", string(modified_inst))
 			check_error(err)
 			// Give a random node instructions 
-			network[random_network_id] <- string(modified_inst) 
+			network[channel_id] <- string(modified_inst) 
 	}
 	
 }
