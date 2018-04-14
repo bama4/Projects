@@ -1,4 +1,4 @@
-{"do": "join-ring"}
-{"do": "join-ring"}
-{"do": "join-ring"}
-{"do": "join-ring"}
+{"do":"join-ring"}
+{"do":"join-ring"}
+{"do":"join-ring"}
+{"do":"join-ring"}
