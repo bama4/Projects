@@ -134,7 +134,6 @@ func init_topology(){
 }
 
 
-
 /*
 This is a routine that defines a node. The routine listens on the channel that is assigned
 to the given channel id  for incoming messages.
