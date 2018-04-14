@@ -3,6 +3,11 @@ package init_ring_fingers
 import "log"
 import chord "../utils/node_defs"
 import "math"
+import "sync"
+
+/*This is a lock that should eb used when writing to maps
+*/
+var map_lock = sync.Mutex{}
 
 func Init_Ring_Fingers(node *chord.Node){
 
@@ -12,7 +17,9 @@ func Init_Ring_Fingers(node *chord.Node){
 		//The finger tables are m bits long where m is the number of bits in the identifier.
 		for i:=0; i < 64; i++ {
 			//Should have 64 entries that increment in i + 2^i
+			map_lock.Lock()
 			node.FingerTable[int64(i) + int64(math.Pow(2.0, float64(i)))] = nil
+			map_lock.Unlock()
 		}
 	}
 }

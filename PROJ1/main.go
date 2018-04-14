@@ -35,6 +35,10 @@ This is the global sync group to handle the goroutines properly
 */
 var wg sync.WaitGroup
 
+/*This is a lock that should eb used when writing to maps
+*/
+var map_lock = sync.Mutex{}
+
 
 /*
 This is the number of nodes in the ring
@@ -119,7 +123,9 @@ func init_topology(){
 	for i:=0; i < number_of_network_nodes; i++ {
 		id := generate_channel_id()
 		//add node to network
-		network[int64(id)] = make(chan string, 100)	
+		map_lock.Lock()
+		network[int64(id)] = make(chan string, 100)
+		map_lock.Unlock()
 		//start up node
 		id_64 := int64(id)
 		wg.Add(1)
@@ -152,11 +158,12 @@ func net_node(channel_id int64){
 	//create
 	if len(ring_nodes) == 0{
 		node_obj.Successor = &node_obj
+		map_lock.Lock()
 		ring_nodes[channel_id] = &node_obj
+		map_lock.Unlock()
 		log.Printf("Node %d was used to create the ring.", channel_id)
 	}
 
-	
 	for {
 		select {
 			case <-time.After(time.Duration(wait_time) * time.Second):
@@ -181,7 +188,10 @@ func net_node(channel_id int64){
 						_ = val
 						sponsoring_node_id := message.SponsoringNode
 						join.Join_ring(sponsoring_node_id, &node_obj)
+
+						map_lock.Lock()
 						ring_nodes[channel_id] = &node_obj
+						map_lock.Unlock()
 					}else{
 						log.Printf("\nNode %d is already in the ring; cannot join-ring\n", channel_id)
 					}
@@ -189,7 +199,9 @@ func net_node(channel_id int64){
 					if val, ok := ring_nodes[channel_id]; ok{
 						_ = val
 						leave.Leave_ring(&node_obj, message.Mode)
+						map_lock.Lock()
 						delete(ring_nodes, channel_id)
+						map_lock.Unlock()
 					}else{
 						log.Printf("\nNode %d is not in the ring; cannot leave-ring\n", channel_id)
 					}
@@ -255,14 +267,15 @@ func coordinator(prog_args []string){
 	//Create a bunch of random nodes for the network
 	init_topology()
 
-	//Get a random network nodes id
-	var random_node_id int64
+	//Get a random ring nodes id
+	var random_ring_id int64
 
 	//get a list of string json instructions to send to random nodes
 	var instructions []string = create_message_list(file_name)
+	var channel_id int64
 	for i := 0; i < len(instructions); i++ {
 		//pick a random node in the ring to send the message to.
-		random_node_id = get_random_ring_node()
+		random_ring_id = get_random_ring_node()
 		random_network_id := get_random_network_node()
 			byte_msg := []byte(instructions[i])
 			var message msg.Message
@@ -274,19 +287,24 @@ func coordinator(prog_args []string){
 			//format join ring instruction with random sponsoring node
 			if message.Do == "join-ring" {
 
-				if random_node_id > 0 {
-					message.SponsoringNode = random_node_id
+				if random_ring_id > 0 {
+					message.SponsoringNode = random_ring_id
 				}else{
-					log.Println("There is no node to sponsor for join ring: %d")
+					log.Println("There is no node to sponsor for join ring")
 					continue
 				}
+				channel_id = random_network_id
+
+			}else{
+				channel_id = random_ring_id
+
 			}
 
 			modified_inst, err := json.Marshal(message)
 			log.Printf("Read the following instruction from file %s.", string(modified_inst))
 			check_error(err)
 			// Give a random node instructions 
-			network[random_network_id] <- string(modified_inst) 
+			network[channel_id] <- string(modified_inst) 
 	}
 	
 }
