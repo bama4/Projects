@@ -25,6 +25,7 @@ func find_biggest_node(finger_table *map[int64]*Node, node_id int64)(biggest int
 	}
 	return
 }
+// func FindClosestPreceedingNode(node_obj *node.Node, respond_to int64) (closest_preceeding *node.Node){
 
 func Put(data *msg.Data, respond_to int64) {
 
@@ -47,6 +48,7 @@ func Put(data *msg.Data, respond_to int64) {
 			// Go to the biggest node without overshooting
 			// ClosestPrecedingNode function in master
 			var biggest = find_biggest_node(&FingerTable, node_id)		
+			var *node.Node = FindClosestPreceedingNode(&v, k)
 
 		}		
 	}
