@@ -10,14 +10,15 @@ import node "./utils/node_defs"
 func Put(data *msg.Data, respond_to int64) {
 
 	// Get the node ID for data string
-	var node_id = map_to_string_id(data.Key, respond_to)
+	var node_id = map_to_string_id(data.Key)
 
 	// Node gets data 
-	ring_nodes[node_id].Value = data.Value
-	
-	// map key from data.key to noe ID that is supposed to store
-	// Find specific node in ring , if doesn't exist, map to successor
+	// DataTable is also a map
+	ring_nodes[node_id].DataTable = data.Value
 
+
+	//ring_nodes[node_id].Value = data.Value
+	
 	// network[respond_to] <- "Put"
 
 
