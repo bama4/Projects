@@ -57,6 +57,22 @@ func check_error(err error){
 	}
 	
 }
+
+/*Maps a string to an identifier
+*/
+func map_string_to_id(msg string)(identifier int64){
+	var msg_sum int64 = int64(0)
+	identifier = int64(0)
+	for i, r := range msg {
+		_ = i
+		msg_sum += int64(r)
+	}
+
+	identifier = int64(msg_sum % int64(number_of_network_nodes))
+	return
+
+}
+
 /*Gets a random node in the chord ring
 */
 func get_random_ring_node() (rand_num int64) {
@@ -286,7 +302,6 @@ func coordinator(prog_args []string){
 	mean_wait_value = mean_wait
 	number_of_network_nodes = num_nodes
 	log.Println("This is the coordinator.")
-
 	//Create a bunch of random nodes for the network
 	init_topology()
 
