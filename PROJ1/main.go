@@ -149,6 +149,34 @@ func init_topology(){
 	}
 }
 
+/*
+The predecessor_id is the id of the node that is the predecesor of the node_obj
+*/
+func Notify(node_obj *node.Node, predecessor_id int64){
+
+
+	//If the predecessor id is not in the ring, then this is a problem
+	 if val, ok := ring_nodes[predecessor_id]; ok != true {
+		log.Printf("\nCannot add %d as a predecessor to %d; %d is not in the ring\n", predecessor_id, node_obj.Predecessor, predecessor_id)
+		return
+	}
+	//If node_obj already has a predecessor check to see if the predecessor_id is even closer to the node_obj.ChannelId
+	//Than the existing node_obj's Predecessor
+	if node_obj.Predecessor != nil {
+		if predecessor_id > node_obj.Predecessor.ChannelId && predecessor_id < node_obj.ChannelId {
+			node_obj.Predecessor = ring_nodes[predecessor_id]
+		}
+
+	// If node_obj does not have a predecessor yet, then assign predecessor_id as node_objs PRedecessor
+	// As long as predecessor_id < node_obj.ChannelId
+	}else if node_obj.Predecessor == nil {
+		if predecessor_id < node_obj.ChannelId {
+			node_obj.Predecessor = ring_nodes[predecessor_id]
+		}else{
+			log.Printf("\nPredecessor: %d is greater than Node %d. %d must be < %d", predecessor_id, node_obj.Predecessor, predecessor_id, node_obj.Predecessor)
+		}
+	}
+}
 
 /*
 This is a routine that defines a node. The routine listens on the channel that is assigned
@@ -221,8 +249,10 @@ func net_node(channel_id int64){
 					}else{
 						log.Printf("\nNode %d is not in the ring; cannot leave-ring\n", channel_id)
 					}
-				}
+				} else if message.Do == "ring-notify"{
 
+					Notify(&node_obj, message.RespondTo)
+				}
 				/*else if (message.Do == "put"){
 					respond_to_node_id = struct_message.RespondTo
 					data  = struct_message.Data
