@@ -288,9 +288,11 @@ return n
 Find the successor node of the target_id...
 the sponsoring node in this case is the node_obj
 the sponsoring node is sent the successor object that is found
+
+The resulting successor is sent to the node_objs bucket entry
+in the ring_nodes_bucket map
 */
 func FindRingSuccessor(node_obj *node.Node, target_id int64) int {
-
 	if node_obj.ChannelId < target_id && target_id < node_obj.Successor.ChannelId {
 		log.Printf("\nFOUND a place in between for %d using find successor\n", target_id)
 
@@ -329,6 +331,7 @@ respond_to is the node id that needs the closest preceeding node, node_obj is th
 func FindClosestPreceedingNode(node_obj *node.Node, respond_to int64) (closest_preceeding *node.Node){
 	closest_preceeding = nil
 
+	log.Println("Searching for closest preceeding node.....")
 	for i := len(node_obj.FingerTable)-1; i >= 0; i-- {
 		map_lock.Lock()
 		if node_obj.FingerTable[int64(i)] != nil {
@@ -351,6 +354,33 @@ func FindClosestPreceedingNode(node_obj *node.Node, respond_to int64) (closest_p
 	return
 }
 
+/*
+Refreshes the finger table.
+node_obj is the node that should refresh its table entries
+*/
+func FixRingFingers(node_obj *node.Node){
+
+	for i :=0; i < len(node_obj.FingerTable); i++ {
+		//find the successor for target id n.id + 2^i for the ith entry
+		var message = msg.Message {Do:"find-ring-successor",
+			TargetId: int64(node_obj.ChannelId) + int64(math.Exp2(float64(i))), RespondTo: node_obj.ChannelId}
+		string_message, err := json.Marshal(message)
+		check_error(err)
+		map_lock.Lock()
+		network[node_obj.ChannelId] <- string(string_message)
+		map_lock.Unlock()
+
+		//wait to recieve the successor result from find successor
+		map_lock.Lock()
+		entry_successor := <- ring_nodes_bucket[node_obj.ChannelId]
+		map_lock.Unlock()
+		map_lock.Lock()
+		node_obj.FingerTable[int64(i)] = entry_successor
+		map_lock.Unlock()
+	}
+	log.Printf("\nNode %d updated to the following: \n")
+	print_node(node_obj)
+}
 
 /*
 This is a routine that defines a node. The routine listens on the channel that is assigned
@@ -432,7 +462,10 @@ func net_node(channel_id int64){
 					}else{
 						log.Printf("\nRespondTo node: %d does not exist in the ring\n", message.RespondTo)
 					}
+				}else if message.Do == "fix-ring-fingers"{
+					FixRingFingers(&node_obj)
 				}
+
 				/*else if (message.Do == "put"){
 					respond_to_node_id = struct_message.RespondTo
 					data  = struct_message.Data
@@ -546,6 +579,8 @@ func coordinator(prog_args []string){
 				}
 				channel_id = random_network_id
 
+			}else if message.Do == "fix-ring-fingers" {
+				channel_id = random_ring_id
 			}else{
 				channel_id = random_ring_id
 
