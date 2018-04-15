@@ -249,7 +249,7 @@ func Notify(node_obj *node.Node, predecessor_id int64){
 	}
 }
 
-// Gets sponsoring node ID to lookup
+// Takes in the sponsoring node id
 // Node object is the node that wants to join
 func Join_ring(sponsoring_node_id int64, node_obj *node.Node){
 	
@@ -259,6 +259,7 @@ func Join_ring(sponsoring_node_id int64, node_obj *node.Node){
     //The &node_obj is the node that needs a successor
     //Compose find ring successor message
     var message = msg.Message {Do:"find-ring-successor", TargetId: node_obj.ChannelId, RespondTo: sponsoring_node_id}
+
     string_message, err := json.Marshal(message)
     check_error(err)
 	map_lock.Lock()
@@ -270,6 +271,39 @@ func Join_ring(sponsoring_node_id int64, node_obj *node.Node){
 	node_obj.Successor = successor
     log.Printf("\nSENT find successor message with sponsoring node: %d and target node: %d\n", sponsoring_node_id, node_obj.ChannelId)
     return
+}
+
+
+/*
+The respond-to (sponsoring) node is the node_obj and the
+target id is the node id that is looking for a predecessor
+
+*/
+func FindRingPredecessor(node_obj *node.Node, target_id int64){
+	potential_predecessor := node_obj
+
+	log.Printf("\nSearching for predecessor for %d with sponsoring node as %d\n", target_id, node_obj.ChannelId)
+	// While the target id is not between the 
+	for !(target_id > potential_predecessor.ChannelId && target_id < potential_predecessor.Successor.ChannelId){
+		potential_predecessor = FindClosestPreceedingNode(potential_predecessor, target_id)
+
+		//If the potential predecessor is equal to the node
+		//that sponsored finding the predecessor...
+		if potential_predecessor.ChannelId == node_obj.ChannelId{
+			if node_obj.ChannelId < target_id {
+				//Tell the node_obj (respond to node) that
+				//the predecessor of target_id is node_obj
+				map_lock.Lock()
+				ring_nodes_bucket[node_obj.ChannelId] <- node_obj
+				map_lock.Unlock()
+				return
+			}
+		}
+	}
+	map_lock.Lock()
+	ring_nodes_bucket[node_obj.ChannelId] <- node_obj
+	map_lock.Unlock()
+	return 
 }
 
 /*
@@ -424,7 +458,14 @@ func net_node(channel_id int64){
 					if sponsor_node, ok := ring_nodes.Load(message.RespondTo); ok{
 						FindRingSuccessor(sponsor_node, message.TargetId)
 					}else{
-						log.Printf("\nRespondTo node: %d does not exist in the ring\n", message.RespondTo)
+						log.Printf("\nRespondTo node: %d does not exist in the ring for find successor\n", message.RespondTo)
+					}
+				} else if message.Do == "find-ring-predecessor" {
+					//respond-to contains the "sponsor" of this request
+					if sponsor_node, ok := ring_nodes.Load(message.RespondTo); ok{
+						FindRingPredecessor(sponsor_node, message.TargetId)
+					}else{
+						log.Printf("\nRespondTo node: %d does not exist in the ring for find precedessor\n", message.RespondTo)
 					}
 				}
 				/*else if (message.Do == "put"){
