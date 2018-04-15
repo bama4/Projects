@@ -7,7 +7,7 @@ import "sync"
 */
 var map_lock = sync.Mutex{}
 
-func Init_Ring_Fingers(node *chord.Node){
+func Init_Ring_FingerTable(node *chord.Node){
 
 	if len(node.FingerTable) == 0	{
 		//The finger tables are m bits long where m is the number of bits in the identifier.
