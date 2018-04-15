@@ -23,4 +23,4 @@ type Message struct {
 type Data struct {
 	Key string `json:"string"`
 	Value string `json:"string"`
-}tring
+}
