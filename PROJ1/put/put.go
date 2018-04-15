@@ -35,22 +35,21 @@ func Put(data *msg.Data, respond_to int64) {
 	var node_id = map_to_string_id(data.Key)
 
 	// Look in current node (this) fingertable	
+	// FingerTable is map[int64]*node
+	// Key is entry , value is node that has it
 	for k, v := range FingerTable {
 		if k == node_id {
 			// We have a direct mapping for the key, go to this node
-
+			v.DataTable[data.Key] := data.Value
 
 		} else {
 			// It's not in our finger table
 			// Go to the biggest node without overshooting
+			// ClosestPrecedingNode function in master
 			var biggest = find_biggest_node(&FingerTable, node_id)		
 
-			
 		}		
 	}
-
-	// DataTable is also a map
-	// Need to do a lookup to a node and route to finger tables
 
 	network[respond_to] <- "Putting data at node xx"
 
