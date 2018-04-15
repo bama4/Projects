@@ -308,7 +308,8 @@ func FindRingSuccessor(node_obj *node.Node, target_id int64) int {
 			log.Printf("\nFOUND %d's successor is itself\n", target_id)
 			if node, ok := ring_nodes.Load(target_id); ok {
 				ring_nodes_bucket[node_obj.ChannelId] <- node
-				node.Successor = node
+			}else{
+				log.Printf("\nFAILED to find any successor for target_id\n")
 			}
 			return 0
 		}
@@ -362,17 +363,13 @@ func FixRingFingers(node_obj *node.Node){
 
 	for i :=0; i < len(node_obj.FingerTable); i++ {
 		//find the successor for target id n.id + 2^i for the ith entry
-		var message = msg.Message {Do:"find-ring-successor",
-			TargetId: int64(node_obj.ChannelId) + int64(math.Exp2(float64(i))), RespondTo: node_obj.ChannelId}
-		string_message, err := json.Marshal(message)
-		check_error(err)
-		map_lock.Lock()
-		network[node_obj.ChannelId] <- string(string_message)
-		map_lock.Unlock()
-
+		FindRingSuccessor(node_obj, int64(node_obj.ChannelId) + int64(math.Exp2(float64(i))))
+		log.Printf("\nLooking for %d's successor at entry %d for Node %d\n", 
+			int64(node_obj.ChannelId) + int64(math.Exp2(float64(i))), i, node_obj.ChannelId)
 		//wait to recieve the successor result from find successor
 		map_lock.Lock()
 		entry_successor := <- ring_nodes_bucket[node_obj.ChannelId]
+		log.Printf("\nRecieved successor %d for entry %d\n", entry_successor.ChannelId, i)
 		map_lock.Unlock()
 		map_lock.Lock()
 		node_obj.FingerTable[int64(i)] = entry_successor
