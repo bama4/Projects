@@ -5,7 +5,6 @@ import "os"
 import "strconv"
 import node "./utils/node_defs"
 import msg "./utils/message_defs"
-import join "./join_ring"
 import leave "./leave_ring"
 import init_ring_fingers "./init_ring_fingers"
 import "math/rand"
@@ -80,7 +79,8 @@ node id/channel id can be accessed (example: update node 1's predecessor if we
 are currently at node 1 in a lookup done through chord routing)
 
 This map does not replace routing through choord, therefore no functions in this program
-depend on this map for routing. Routing is done through a combination of predecessor, successor pointer traveral and finger table lookups.
+depend on this map for routing. Routing is done through a combination of predecessor,
+successor pointer traveral and finger table lookups.
 */
 var ring_nodes = NewRingNodesMap()
 
@@ -136,6 +136,7 @@ func get_random_ring_node() (rand_num int64) {
         if len(ring_nodes.ring_nodes) == 0 {
             return -1
         }
+
         if val, ok := ring_nodes.Load(int64(rand_num)); ok {
             _ = val
             log.Printf("Random ring node:%d\n", int64(rand_num))
@@ -241,6 +242,110 @@ func Notify(node_obj *node.Node, predecessor_id int64){
 	}
 }
 
+
+func send_to_network(node_id int64, message string){
+	map_lock.Lock()
+	network[node_id] <- message
+	map_lock.Unlock()
+}
+// Gets sponsoring node ID to lookup
+// Node object is the node that wants to join
+func Join_ring(sponsoring_node_id int64, node_obj *node.Node){
+	
+    node_obj.Predecessor = nil
+    log.Printf("Node %d is joining the ring now", sponsoring_node_id)
+    //The &node_obj is the node that needs a successor
+    //Compose find ring successor message
+    var message = msg.Message {Do:"find-ring-successor", TargetId: node_obj.ChannelId, RespondTo: sponsoring_node_id}
+    string_message, err := json.Marshal(message)
+    check_error(err)
+    go send_to_network(sponsoring_node_id, string(string_message))
+    log.Printf("\nSENT find successor message with sponsoring node: %d and target node: %d\n", sponsoring_node_id, node_obj.ChannelId)
+    return
+}
+
+/*
+/ ask node n to find the successor of id
+n.find successor(id)
+if (id ∈ (n,successor])
+return successor;
+else
+n
+0 = closest preceding node(id);
+return n
+0
+.find successor(id);
+
+Find the successor node of the target_id...
+the sponsoring node in this case is the node_obj
+*/
+func FindRingSuccessor(node_obj *node.Node, target_id int64) int {
+
+	if node_obj.ChannelId < target_id && target_id < node_obj.Successor.ChannelId {
+		log.Printf("\nFOUND a place in between for %d using find successor\n", target_id)
+
+		//Tell target id node that node_obj.Successor is its successor
+		if node, ok := ring_nodes.Load(target_id); ok {
+			node.Successor = node_obj.Successor
+			log.Printf("\nFINDING the successor of %d to be %d\n", target_id, node_obj.Successor.ChannelId)	
+		}
+		return 0
+
+	}else if node_obj.ChannelId == node_obj.Successor.ChannelId {
+		if node_obj.ChannelId > target_id {
+			if node, ok := ring_nodes.Load(target_id); ok {
+				log.Printf("\nFOUND  %d's successor is %d\n", target_id, node_obj.Successor.ChannelId)
+				node.Successor = node_obj.Successor
+			}
+			return 0
+		}else{
+			log.Printf("\nFOUND %d's successor is itself\n", target_id)
+			if node, ok := ring_nodes.Load(target_id); ok {
+				node.Successor = node
+			}
+			return 0
+		}
+	}else{
+		log.Printf("\nSTILL NEED TO FIND a place for %d using find successor\n", target_id)
+		closest_preceeding := FindClosestPreceedingNode(node_obj, target_id)
+		return FindRingSuccessor(closest_preceeding, target_id)
+	}
+}
+
+/*
+n.closest preceding node(id)
+for i = m downto 1
+if (finger[i] ∈ (n,id))
+return finger[i];
+return n;
+
+respond_to is the node id that needs the closest preceeding node, node_obj is the sponsoring node
+*/
+func FindClosestPreceedingNode(node_obj *node.Node, respond_to int64) (closest_preceeding *node.Node){
+	closest_preceeding = nil
+
+	for i := len(node_obj.FingerTable)-1; i >= 0; i-- {
+		map_lock.Lock()
+		if node_obj.FingerTable[int64(i)] != nil {
+		map_lock.Unlock()
+			map_lock.Lock()
+			if (node_obj.FingerTable[int64(i)].ChannelId < node_obj.ChannelId && respond_to > node_obj.FingerTable[int64(i)].ChannelId) {
+			map_lock.Unlock()
+			map_lock.Lock()
+			closest_preceeding = node_obj.FingerTable[int64(i)]
+			map_lock.Unlock()
+			return
+			}else{
+				map_lock.Unlock()			
+			}
+		}else{
+			map_lock.Unlock()
+		}
+	}
+	closest_preceeding = node_obj
+	return
+}
+
 /*
 This is a routine that defines a node. The routine listens on the channel that is assigned
 to the given channel id  for incoming messages.
@@ -271,7 +376,7 @@ func net_node(channel_id int64){
 
 	for {
 		select {
-			case <-time.After(time.Duration(wait_time) * time.Second):
+			case <-time.After(time.Duration(wait_time  % (int(mean_wait_value) + 5)) * time.Second):
 				msg_recv := <-network[channel_id]
 				//wait an average of AVERAGE_WAIT_TIME seconds before accepting a message
 				log.Printf("\nWaiting %d seconds before processing message for Node: %d\n", wait_time, channel_id)
@@ -292,7 +397,7 @@ func net_node(channel_id int64){
 					if val, ok := ring_nodes.Load(channel_id); ok != true {
 						_ = val
 						sponsoring_node_id := message.SponsoringNode
-						join.Join_ring(sponsoring_node_id, &node_obj)
+						Join_ring(sponsoring_node_id, &node_obj)
 
 						ring_nodes.Store(channel_id, &node_obj)
 					}else{
@@ -306,9 +411,12 @@ func net_node(channel_id int64){
 					}else{
 						log.Printf("\nNode %d is not in the ring; cannot leave-ring\n", channel_id)
 					}
-				} else if message.Do == "ring-notify"{
+				} else if message.Do == "ring-notify" {
 
 					Notify(&node_obj, message.RespondTo)
+
+				} else if message.Do == "find-ring-successor" {
+					FindRingSuccessor(&node_obj, message.TargetId)
 				}
 				/*else if (message.Do == "put"){
 					respond_to_node_id = struct_message.RespondTo
@@ -317,12 +425,12 @@ func net_node(channel_id int64){
 				}...
 				*/
 				print_ring_nodes()
-				print_node(node_obj)
 			default:
 				time.Sleep(1)
-				continue
 		}
 	}
+
+	log.Printf("\nNode %d left UNORDERLY\n", node_obj.ChannelId)
 }
 
 /*
@@ -335,13 +443,14 @@ func cleanup(){
 
 func print_ring_nodes(){
 	log.Println("+++LIST OF NODES CURRENTLY IN THE RING+++")
-	for channel_id, _ := range ring_nodes.ring_nodes {
+	for channel_id, node := range ring_nodes.ring_nodes {
 		log.Printf("\nNode %d is in the ring\n", channel_id)
+		print_node(node)
 	}
 	log.Println("+++END OF LIST OF NODES CURRENTLY IN THE RING+++")
 }
 
-func print_node(node_obj node.Node){
+func print_node(node_obj *node.Node){
 log.Printf("\n+++Contents of Node %d+++\n", node_obj.ChannelId)
 log.Printf("Channel Id/Node Id: %d\n", node_obj.ChannelId)
 log.Printf("+FingerTable+: nil\n")
