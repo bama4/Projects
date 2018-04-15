@@ -16,6 +16,53 @@ import "strings"
 import "encoding/json"
 import responsetime "./utils/responsetime"
 
+/*This is defining a concurent thread safe map
+The ring_nodes map is NOT the chord ring
+The ring nodes just allows the coordinator to know
+how many nodes are in the ring for randomization purposes.
+
+The ring nodes store node objects for each node id.
+*/
+type RingNodes struct {
+	sync.RWMutex
+	ring_nodes map[int64](*node.Node)
+}
+
+func NewRingNodesMap() *RingNodes {
+	return &RingNodes{
+		ring_nodes: make(map[int64](*node.Node)),
+	}
+}
+
+/*Safely load a value from the map
+*/
+func (r_nodes *RingNodes) Load(key int64)(value *node.Node, ok bool){
+
+	r_nodes.RLock()
+	result, ok := r_nodes.ring_nodes[key]
+	r_nodes.RUnlock()
+	return result, ok
+}
+
+
+/*
+Safely delete a value from the map
+*/
+func (r_nodes *RingNodes) Delete(key int64){
+	r_nodes.Lock()
+	delete(r_nodes.ring_nodes, key)
+	r_nodes.Unlock()
+}
+
+/*
+Safely write to the map
+*/
+func (r_nodes *RingNodes) Store(key int64, value *node.Node){
+	r_nodes.Lock()
+	r_nodes.ring_nodes[key] = value
+	r_nodes.Unlock()
+}
+
 /*
 This is the global "network" variable which is essentially a
 map of all of the identifier/channel (aka network address/node) pairs
@@ -27,8 +74,15 @@ var network = make(map[int64](chan string))
 
 /*
 This is a map that consists of all of the nodes that are in the Chord ring
+The map is so that the coordinator can randomly tell nodes in the ring to leave.
+This is also here for debugging purposes, and so that a node object with a given 
+node id/channel id can be accessed (example: update node 1's predecessor if we
+are currently at node 1 in a lookup done through chord routing)
+
+This map does not replace routing through choord, therefore no functions in this program
+depend on this map for routing. Routing is done through a combination of predecessor, successor pointer traveral and finger table lookups.
 */
-var ring_nodes = make(map[int64](*node.Node))
+var ring_nodes = NewRingNodesMap()
 
 /*
 This is the global sync group to handle the goroutines properly
@@ -79,10 +133,10 @@ func get_random_ring_node() (rand_num int64) {
     for(true){
         rand_num := rand.Intn(number_of_network_nodes)
         //If we generated a channel id that is in use in the ring, return the number
-        if len(ring_nodes) == 0 {
+        if len(ring_nodes.ring_nodes) == 0 {
             return -1
         }
-        if val, ok := ring_nodes[int64(rand_num)]; ok {
+        if val, ok := ring_nodes.Load(int64(rand_num)); ok {
             _ = val
             log.Printf("Random ring node:%d\n", int64(rand_num))
             return int64(rand_num)
@@ -156,7 +210,8 @@ func Notify(node_obj *node.Node, predecessor_id int64){
 
 
 	//If the predecessor id is not in the ring, then this is a problem
-	 if val, ok := ring_nodes[predecessor_id]; ok != true {
+	 if val, ok := ring_nodes.Load(predecessor_id); ok != true {
+		_ = val
 		log.Printf("\nCannot add %d as a predecessor to %d; %d is not in the ring\n", predecessor_id, node_obj.Predecessor, predecessor_id)
 		return
 	}
@@ -164,14 +219,22 @@ func Notify(node_obj *node.Node, predecessor_id int64){
 	//Than the existing node_obj's Predecessor
 	if node_obj.Predecessor != nil {
 		if predecessor_id > node_obj.Predecessor.ChannelId && predecessor_id < node_obj.ChannelId {
-			node_obj.Predecessor = ring_nodes[predecessor_id]
+			if val, ok := ring_nodes.Load(predecessor_id); ok {
+				node_obj.Predecessor = val
+			}else{
+				log.Printf("\nNode %d is not in the ring\n")
+			}
 		}
 
 	// If node_obj does not have a predecessor yet, then assign predecessor_id as node_objs PRedecessor
 	// As long as predecessor_id < node_obj.ChannelId
 	}else if node_obj.Predecessor == nil {
 		if predecessor_id < node_obj.ChannelId {
-			node_obj.Predecessor = ring_nodes[predecessor_id]
+			if val, ok := ring_nodes.Load(predecessor_id); ok {
+				node_obj.Predecessor = val
+			}else{
+				log.Printf("\nNode %d is not in the ring\n")
+			}
 		}else{
 			log.Printf("\nPredecessor: %d is greater than Node %d. %d must be < %d", predecessor_id, node_obj.Predecessor, predecessor_id, node_obj.Predecessor)
 		}
@@ -200,11 +263,9 @@ func net_node(channel_id int64){
 	//If ring is empty just add this node to the ring
 	//This is the first node to enter the ring. Make this node's successor itself.
 	//create
-	if len(ring_nodes) == 0 {
+	if len(ring_nodes.ring_nodes) == 0 {
 		node_obj.Successor = &node_obj
-		map_lock.Lock()
-		ring_nodes[channel_id] = &node_obj
-		map_lock.Unlock()
+		ring_nodes.Store(channel_id, &node_obj)
 		log.Printf("Node %d was used to create the ring.", channel_id)
 	}
 
@@ -228,24 +289,20 @@ func net_node(channel_id int64){
 
 				//Perform join-ring action
 				if message.Do == "join-ring" {
-					if val, ok := ring_nodes[channel_id]; ok != true {
+					if val, ok := ring_nodes.Load(channel_id); ok != true {
 						_ = val
 						sponsoring_node_id := message.SponsoringNode
 						join.Join_ring(sponsoring_node_id, &node_obj)
 
-						map_lock.Lock()
-						ring_nodes[channel_id] = &node_obj
-						map_lock.Unlock()
+						ring_nodes.Store(channel_id, &node_obj)
 					}else{
 						log.Printf("\nNode %d is already in the ring; cannot join-ring\n", channel_id)
 					}
 			   	} else if message.Do == "leave-ring" {
-					if val, ok := ring_nodes[channel_id]; ok{
+					if val, ok := ring_nodes.Load(channel_id); ok{
 						_ = val
 						leave.Leave_ring(&node_obj, message.Mode)
-						map_lock.Lock()
-						delete(ring_nodes, channel_id)
-						map_lock.Unlock()
+						ring_nodes.Delete(channel_id)
 					}else{
 						log.Printf("\nNode %d is not in the ring; cannot leave-ring\n", channel_id)
 					}
@@ -278,7 +335,7 @@ func cleanup(){
 
 func print_ring_nodes(){
 	log.Println("+++LIST OF NODES CURRENTLY IN THE RING+++")
-	for channel_id, _ := range ring_nodes {
+	for channel_id, _ := range ring_nodes.ring_nodes {
 		log.Printf("\nNode %d is in the ring\n", channel_id)
 	}
 	log.Println("+++END OF LIST OF NODES CURRENTLY IN THE RING+++")
