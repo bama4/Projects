@@ -85,6 +85,11 @@ successor pointer traveral and finger table lookups.
 var ring_nodes = NewRingNodesMap()
 
 /*
+This is a blocking map that has channels for each node in the network. This ring_node_values map can be used
+for ring_nodes to recieve node objects.
+*/
+var ring_nodes_bucket = make(map[int64](chan *node.Node))
+/*
 This is the global sync group to handle the goroutines properly
 */
 var wg sync.WaitGroup
@@ -92,7 +97,6 @@ var wg sync.WaitGroup
 /*This is a lock that should be used when writing to maps
 */
 var map_lock = sync.Mutex{}
-
 
 /*
 This is the number of nodes in the ring
@@ -197,6 +201,9 @@ func init_topology(){
 		map_lock.Lock()
 		network[int64(id)] = make(chan string, 100)
 		map_lock.Unlock()
+		map_lock.Lock()
+		ring_nodes_bucket[int64(id)] = make(chan *node.Node)
+		map_lock.Unlock()
 		//start up node
 		id_64 := int64(id)
 		wg.Add(1)
@@ -248,6 +255,7 @@ func Join_ring(sponsoring_node_id int64, node_obj *node.Node){
 	
     node_obj.Predecessor = nil
     log.Printf("Node %d is joining the ring now", sponsoring_node_id)
+    
     //The &node_obj is the node that needs a successor
     //Compose find ring successor message
     var message = msg.Message {Do:"find-ring-successor", TargetId: node_obj.ChannelId, RespondTo: sponsoring_node_id}
@@ -256,6 +264,10 @@ func Join_ring(sponsoring_node_id int64, node_obj *node.Node){
 	map_lock.Lock()
 	network[sponsoring_node_id] <- string(string_message)
 	map_lock.Unlock()
+	map_lock.Lock()
+	successor := <- ring_nodes_bucket[sponsoring_node_id]
+	map_lock.Unlock()
+	node_obj.Successor = successor
     log.Printf("\nSENT find successor message with sponsoring node: %d and target node: %d\n", sponsoring_node_id, node_obj.ChannelId)
     return
 }
@@ -274,6 +286,7 @@ return n
 
 Find the successor node of the target_id...
 the sponsoring node in this case is the node_obj
+the sponsoring node is sent the successor object that is found
 */
 func FindRingSuccessor(node_obj *node.Node, target_id int64) int {
 
@@ -281,22 +294,17 @@ func FindRingSuccessor(node_obj *node.Node, target_id int64) int {
 		log.Printf("\nFOUND a place in between for %d using find successor\n", target_id)
 
 		//Tell target id node that node_obj.Successor is its successor
-		if node, ok := ring_nodes.Load(target_id); ok {
-			node.Successor = node_obj.Successor
-			log.Printf("\nFINDING the successor of %d to be %d\n", target_id, node_obj.Successor.ChannelId)	
-		}
+		ring_nodes_bucket[node_obj.ChannelId] <- node_obj.Successor
 		return 0
 
 	}else if node_obj.ChannelId == node_obj.Successor.ChannelId {
 		if node_obj.ChannelId > target_id {
-			if node, ok := ring_nodes.Load(target_id); ok {
-				log.Printf("\nFOUND  %d's successor is %d\n", target_id, node_obj.Successor.ChannelId)
-				node.Successor = node_obj.Successor
-			}
+			ring_nodes_bucket[node_obj.ChannelId] <- node_obj.Successor
 			return 0
 		}else{
 			log.Printf("\nFOUND %d's successor is itself\n", target_id)
 			if node, ok := ring_nodes.Load(target_id); ok {
+				ring_nodes_bucket[node_obj.ChannelId] <- node
 				node.Successor = node
 			}
 			return 0
@@ -360,7 +368,7 @@ func net_node(channel_id int64){
 
 	var wait_time = int(responsetime.GetResponseTime(mean_wait_value))
 	//Initialize table to size 64
-	init_ring_fingers.Init_Ring_Fingers(&node_obj)
+	init_ring_fingers.Init_Ring_FingerTable(&node_obj)
 	//If ring is empty just add this node to the ring
 	//This is the first node to enter the ring. Make this node's successor itself.
 	//create
@@ -368,6 +376,7 @@ func net_node(channel_id int64){
 		node_obj.Successor = &node_obj
 		ring_nodes.Store(channel_id, &node_obj)
 		log.Printf("Node %d was used to create the ring.", channel_id)
+
 	}
 
 	for {
@@ -393,9 +402,8 @@ func net_node(channel_id int64){
 					if val, ok := ring_nodes.Load(channel_id); ok != true {
 						_ = val
 						sponsoring_node_id := message.SponsoringNode
-						Join_ring(sponsoring_node_id, &node_obj)
-
 						ring_nodes.Store(channel_id, &node_obj)
+						Join_ring(sponsoring_node_id, &node_obj)
 					}else{
 						log.Printf("\nNode %d is already in the ring; cannot join-ring\n", channel_id)
 					}
