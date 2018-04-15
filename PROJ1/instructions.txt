@@ -1,7 +1,6 @@
 {"do":"join-ring"}
 {"do":"join-ring"}
 {"do":"join-ring"}
-{"do":"leave-ring", "mode":"immediately"}
 {"do":"join-ring"}
 {"do":"join-ring"}
 {"do":"join-ring"}
@@ -9,12 +8,7 @@
 {"do":"join-ring"}
 {"do":"join-ring"}
 {"do":"join-ring"}
-{"do":"leave-ring", "mode":"immediately"}
-{"do":"join-ring"}
-{"do":"leave-ring", "mode":"immediately"}
 {"do":"join-ring"}
 {"do":"join-ring"}
 {"do":"join-ring"}
-{"do":"leave-ring", "mode":"immediately"}
-{"do":"leave-ring", "mode":"immediately"}
-{"do":"leave-ring", "mode":"orderly"}
+{"do":"join-ring"}
