@@ -372,11 +372,12 @@ func net_node(channel_id int64){
 
 	for {
 		select {
-			case <-time.After(time.Duration(wait_time  % (int(mean_wait_value) + 5)) * time.Second):
-				msg_recv := <-network[channel_id]
+			case msg_recv := <-network[channel_id]:
+				//msg_recv := <-network[channel_id]
 				//wait an average of AVERAGE_WAIT_TIME seconds before accepting a message
 				log.Printf("\nWaiting %d seconds before processing message for Node: %d\n", wait_time, channel_id)
 				wait_time = int(responsetime.GetResponseTime(mean_wait_value))
+				time.Sleep(time.Duration(wait_time) * time.Second)
 				log.Printf("\nNode: %d recieved the following message:%s\n", channel_id, msg_recv)
 
 				byte_msg := []byte(msg_recv)
