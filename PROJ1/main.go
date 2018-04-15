@@ -243,7 +243,11 @@ func Notify(node_obj *node.Node, predecessor_id int64){
 }
 
 
-
+func send_to_network(node_id int64, message string){
+	map_lock.Lock()
+	network[node_id] <- message
+	map_lock.Unlock()
+}
 // Gets sponsoring node ID to lookup
 // Node object is the node that wants to join
 func Join_ring(sponsoring_node_id int64, node_obj *node.Node){
@@ -255,7 +259,7 @@ func Join_ring(sponsoring_node_id int64, node_obj *node.Node){
     var message = msg.Message {Do:"find-ring-successor", TargetId: node_obj.ChannelId, RespondTo: sponsoring_node_id}
     string_message, err := json.Marshal(message)
     check_error(err)
-    network[sponsoring_node_id] <- string(string_message)
+    go send_to_network(sponsoring_node_id, string(string_message))
     log.Printf("\nSENT find successor message with sponsoring node: %d and target node: %d\n", sponsoring_node_id, node_obj.ChannelId)
     return
 }
@@ -279,11 +283,14 @@ func FindRingSuccessor(node_obj *node.Node, target_id int64) int {
 
 	if node_obj.ChannelId < target_id && target_id < node_obj.Successor.ChannelId {
 		log.Printf("\nFOUND a place in between for %d using find successor\n", target_id)
+
+		//Tell target id node that node_obj.Successor is its successor
 		if node, ok := ring_nodes.Load(target_id); ok {
 			node.Successor = node_obj.Successor
 			log.Printf("\nFINDING the successor of %d to be %d\n", target_id, node_obj.Successor.ChannelId)	
 		}
 		return 0
+
 	}else if node_obj.ChannelId == node_obj.Successor.ChannelId {
 		if node_obj.ChannelId > target_id {
 			if node, ok := ring_nodes.Load(target_id); ok {
@@ -369,7 +376,7 @@ func net_node(channel_id int64){
 
 	for {
 		select {
-			case <-time.After(time.Duration(wait_time) * time.Second):
+			case <-time.After(time.Duration(wait_time  % (int(mean_wait_value) + 5)) * time.Second):
 				msg_recv := <-network[channel_id]
 				//wait an average of AVERAGE_WAIT_TIME seconds before accepting a message
 				log.Printf("\nWaiting %d seconds before processing message for Node: %d\n", wait_time, channel_id)
@@ -420,9 +427,10 @@ func net_node(channel_id int64){
 				print_ring_nodes()
 			default:
 				time.Sleep(1)
-				continue
 		}
 	}
+
+	log.Printf("\nNode %d left UNORDERLY\n", node_obj.ChannelId)
 }
 
 /*

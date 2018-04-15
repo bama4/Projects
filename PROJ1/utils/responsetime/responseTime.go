@@ -17,6 +17,6 @@ func GetResponseTime(meanValue float64) float64 {
 	r1 := rand.New(s1)
 	u := r1.Float64()
 	rateParameter := 1 / meanValue
-	x := -1 * math.Log(1-u) / rateParameter
+	x := -1 * math.Log(1-u) / rateParameter 
 	return x
 }
