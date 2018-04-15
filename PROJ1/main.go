@@ -293,7 +293,7 @@ func FindRingSuccessor(node_obj *node.Node, target_id int64) int {
 	if node_obj.ChannelId < target_id && target_id < node_obj.Successor.ChannelId {
 		log.Printf("\nFOUND a place in between for %d using find successor\n", target_id)
 
-		//Tell target id node that node_obj.Successor is its successor
+		//Tell node_obj that node_obj.Successor is target-ids successor (node_obj is equilvalent to respond-to)
 		ring_nodes_bucket[node_obj.ChannelId] <- node_obj.Successor
 		return 0
 
@@ -420,7 +420,12 @@ func net_node(channel_id int64){
 					Notify(&node_obj, message.RespondTo)
 
 				} else if message.Do == "find-ring-successor" {
-					FindRingSuccessor(&node_obj, message.TargetId)
+					//respond-to contains the "sponsor" of this request
+					if sponsor_node, ok := ring_nodes.Load(message.RespondTo); ok{
+						FindRingSuccessor(sponsor_node, message.TargetId)
+					}else{
+						log.Printf("\nRespondTo node: %d does not exist in the ring\n", message.RespondTo)
+					}
 				}
 				/*else if (message.Do == "put"){
 					respond_to_node_id = struct_message.RespondTo
