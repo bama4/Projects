@@ -10,7 +10,10 @@ import node "./utils/node_defs"
 func Put(data *msg.Data, respond_to int64) {
 
 	// Node gets data 
-	ring_nodes[respond_to].Data = data
+	//ring_nodes[respond_to].Data = data
+
+	// map key from data.key to noe ID that is supposed to store
+	// Find specific node in ring , if doesn't exist, map to successor
 
 	// network[respond_to] <- "Put"
 
