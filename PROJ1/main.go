@@ -13,6 +13,7 @@ import "time"
 import "io/ioutil"
 import "strings"
 import "encoding/json"
+import "math"
 import responsetime "./utils/responsetime"
 
 /*This is defining a concurent thread safe map
@@ -350,6 +351,7 @@ func FindClosestPreceedingNode(node_obj *node.Node, respond_to int64) (closest_p
 	return
 }
 
+
 /*
 This is a routine that defines a node. The routine listens on the channel that is assigned
 to the given channel id  for incoming messages.
@@ -367,16 +369,20 @@ func net_node(channel_id int64){
 				   DataTable:make(map[string]string)}
 
 	var wait_time = int(responsetime.GetResponseTime(mean_wait_value))
-	//Initialize table to size 64
-	init_ring_fingers.Init_Ring_FingerTable(&node_obj)
+	//Initialize table to size N where 2^N is the number of nodes
+	init_ring_fingers.Init_Ring_FingerTable(&node_obj, int(math.Log2(float64(number_of_network_nodes))))
 	//If ring is empty just add this node to the ring
 	//This is the first node to enter the ring. Make this node's successor itself.
 	//create
 	if len(ring_nodes.ring_nodes) == 0 {
 		node_obj.Successor = &node_obj
 		ring_nodes.Store(channel_id, &node_obj)
+		//Initialize all of the entries in the fingertable of the create node to the node
+		//itself
+		for i := 0; i < len(node_obj.FingerTable); i++ {
+			node_obj.FingerTable[int64(i)] = &node_obj
+		}
 		log.Printf("Node %d was used to create the ring.", channel_id)
-
 	}
 
 	for {
@@ -462,11 +468,11 @@ func print_ring_nodes(){
 func print_node(node_obj *node.Node){
 log.Printf("\n+++Contents of Node %d+++\n", node_obj.ChannelId)
 log.Printf("Channel Id/Node Id: %d\n", node_obj.ChannelId)
-log.Printf("+FingerTable+: nil\n")
+log.Printf("+FingerTable+:\n")
 if node_obj.FingerTable != nil {
     for node_id, node_entry := range node_obj.FingerTable {
         if node_entry != nil {
-		log.Printf("Finger Table entry %d is occupied\n", node_id)		
+		log.Printf("Finger Table at %d is %d\n", node_id, node_entry.ChannelId)		
 	}
     }
 }
@@ -505,7 +511,9 @@ func coordinator(prog_args []string){
 	mean_wait, err := strconv.ParseFloat(prog_args[2], 64)
 	check_error(err)
 	mean_wait_value = mean_wait
-	number_of_network_nodes = num_nodes
+
+	//The number of nodes is 2^N where N is what the user entered for the amount of nodes
+	number_of_network_nodes = int(math.Exp2(float64(num_nodes)))
 	log.Println("This is the coordinator.")
 	//Create a bunch of random nodes for the network
 	init_topology()
@@ -563,7 +571,7 @@ func main(){
 
 	var prog_args = os.Args[1:]
 		if len(prog_args) < 3 {
-		log.Println("USAGE: go run main.go <INSTRUCTION FILE> <NUM NODES> <AVERAGE_WEIGHT_TIME>")
+		log.Println("USAGE: go run main.go <INSTRUCTION FILE> <N WHERE #NODES is 2^N> <AVERAGE_WEIGHT_TIME>")
 		os.Exit(1)
 	}
 
