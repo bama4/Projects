@@ -10,18 +10,19 @@ import "strconv"
 // Node gets this message
 // Use all the nodes fields
 
-func find_biggest(data *msg.Data, node_id int64)(biggest int64) {
+func find_biggest_node(finger_table *map[int64]*Node, node_id int64)(biggest int64) {
 
-	var bigger := 0
 	var old_k := 0
 	
-	for k, v := range FingerTable {
+	for k, v := range finger_table {
 		if int64(k) < node_id {
-			bigger := k
+			if int64(k) > old_k {
+				biggest := k
 
+			}
+			old_k := k
 		}	
 	}
-	
 	return
 }
 
@@ -38,30 +39,19 @@ func Put(data *msg.Data, respond_to int64) {
 		if k == node_id {
 			// We have a direct mapping for the key, go to this node
 
+
 		} else {
-
-			// We don't have a direct mapping so we need to go to the next node in the finger table
-			// We go to the node that is closest without over shooting
-			if k < node_id {
-				biggest = k
-
-
-			}
+			// It's not in our finger table
+			// Go to the biggest node without overshooting
+			var biggest = find_biggest_node(&FingerTable, node_id)		
 
 			
-
-
 		}		
-
 	}
 
 	// DataTable is also a map
-//	ring_nodes[node_id].DataTable = data.Value
 	// Need to do a lookup to a node and route to finger tables
 
-
-	//ring_nodes[node_id].Value = data.Value
-	
 	network[respond_to] <- "Putting data at node xx"
 
 
