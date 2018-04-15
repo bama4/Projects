@@ -9,9 +9,12 @@ import node "./utils/node_defs"
 
 func Put(data *msg.Data, respond_to int64) {
 
-	// Node gets data 
-	//ring_nodes[respond_to].Data = data
+	// Get the node ID for data string
+	var node_id = map_to_string_id(data.Key, respond_to)
 
+	// Node gets data 
+	ring_nodes[node_id].Value = data.Value
+	
 	// map key from data.key to noe ID that is supposed to store
 	// Find specific node in ring , if doesn't exist, map to successor
 
