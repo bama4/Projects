@@ -89,7 +89,7 @@ This is the global sync group to handle the goroutines properly
 */
 var wg sync.WaitGroup
 
-/*This is a lock that should eb used when writing to maps
+/*This is a lock that should be used when writing to maps
 */
 var map_lock = sync.Mutex{}
 
@@ -242,12 +242,6 @@ func Notify(node_obj *node.Node, predecessor_id int64){
 	}
 }
 
-
-func send_to_network(node_id int64, message string){
-	map_lock.Lock()
-	network[node_id] <- message
-	map_lock.Unlock()
-}
 // Gets sponsoring node ID to lookup
 // Node object is the node that wants to join
 func Join_ring(sponsoring_node_id int64, node_obj *node.Node){
@@ -259,7 +253,9 @@ func Join_ring(sponsoring_node_id int64, node_obj *node.Node){
     var message = msg.Message {Do:"find-ring-successor", TargetId: node_obj.ChannelId, RespondTo: sponsoring_node_id}
     string_message, err := json.Marshal(message)
     check_error(err)
-    go send_to_network(sponsoring_node_id, string(string_message))
+	map_lock.Lock()
+	network[sponsoring_node_id] <- string(string_message)
+	map_lock.Unlock()
     log.Printf("\nSENT find successor message with sponsoring node: %d and target node: %d\n", sponsoring_node_id, node_obj.ChannelId)
     return
 }
@@ -376,8 +372,8 @@ func net_node(channel_id int64){
 
 	for {
 		select {
-			case <-time.After(time.Duration(wait_time  % (int(mean_wait_value) + 5)) * time.Second):
-				msg_recv := <-network[channel_id]
+			case msg_recv := <-network[channel_id]:
+				//msg_recv := <-network[channel_id]
 				//wait an average of AVERAGE_WAIT_TIME seconds before accepting a message
 				log.Printf("\nWaiting %d seconds before processing message for Node: %d\n", wait_time, channel_id)
 				wait_time = int(responsetime.GetResponseTime(mean_wait_value))
