@@ -213,39 +213,24 @@ func init_topology(){
 }
 
 /*
-The predecessor_id is the id of the node that is the predecesor of the node_obj
+The predecessor is the id of the node that is the predecesor of the node_obj
 */
-func Notify(node_obj *node.Node, predecessor_id int64){
+func Notify(node_obj *node.Node, predecessor *node.Node){
 
-
-	//If the predecessor id is not in the ring, then this is a problem
-	 if val, ok := ring_nodes.Load(predecessor_id); ok != true {
-		_ = val
-		log.Printf("\nCannot add %d as a predecessor to %d; %d is not in the ring\n", predecessor_id, node_obj.Predecessor, predecessor_id)
-		return
-	}
-	//If node_obj already has a predecessor check to see if the predecessor_id is even closer to the node_obj.ChannelId
+	//If node_obj already has a predecessor check to see if the predecessor is even closer to the node_obj.ChannelId
 	//Than the existing node_obj's Predecessor
 	if node_obj.Predecessor != nil {
-		if predecessor_id > node_obj.Predecessor.ChannelId && predecessor_id < node_obj.ChannelId {
-			if val, ok := ring_nodes.Load(predecessor_id); ok {
-				node_obj.Predecessor = val
-			}else{
-				log.Printf("\nNode %d is not in the ring\n")
-			}
+		if predecessor.ChannelId > node_obj.Predecessor.ChannelId && predecessor.ChannelId < node_obj.ChannelId {
+				node_obj.Predecessor = predecessor
 		}
 
-	// If node_obj does not have a predecessor yet, then assign predecessor_id as node_objs PRedecessor
-	// As long as predecessor_id < node_obj.ChannelId
+	// If node_obj does not have a predecessor yet, then assign predecessor as node_objs PRedecessor
+	// As long as predecessor < node_obj.ChannelId
 	}else if node_obj.Predecessor == nil {
-		if predecessor_id < node_obj.ChannelId {
-			if val, ok := ring_nodes.Load(predecessor_id); ok {
-				node_obj.Predecessor = val
-			}else{
-				log.Printf("\nNode %d is not in the ring\n")
-			}
+		if predecessor.ChannelId < node_obj.ChannelId {
+				node_obj.Predecessor = predecessor
 		}else{
-			log.Printf("\nPredecessor: %d is greater than Node %d. %d must be < %d", predecessor_id, node_obj.Predecessor, predecessor_id, node_obj.Predecessor)
+			log.Printf("\nPredecessor: %d is greater than Node %d. %d must be < %d", predecessor.ChannelId, node_obj.Predecessor, predecessor.ChannelId, node_obj.Predecessor)
 		}
 	}
 }
@@ -322,9 +307,11 @@ return n
 Find the successor node of the target_id...
 the sponsoring node in this case is the node_obj
 the sponsoring node is sent the successor object that is found
+
+The resulting successor is sent to the node_objs bucket entry
+in the ring_nodes_bucket map
 */
 func FindRingSuccessor(node_obj *node.Node, target_id int64) int {
-
 	if node_obj.ChannelId < target_id && target_id < node_obj.Successor.ChannelId {
 		log.Printf("\nFOUND a place in between for %d using find successor\n", target_id)
 
@@ -340,7 +327,8 @@ func FindRingSuccessor(node_obj *node.Node, target_id int64) int {
 			log.Printf("\nFOUND %d's successor is itself\n", target_id)
 			if node, ok := ring_nodes.Load(target_id); ok {
 				ring_nodes_bucket[node_obj.ChannelId] <- node
-				node.Successor = node
+			}else{
+				log.Printf("\nFAILED to find any successor for target_id\n")
 			}
 			return 0
 		}
@@ -363,6 +351,7 @@ respond_to is the node id that needs the closest preceeding node, node_obj is th
 func FindClosestPreceedingNode(node_obj *node.Node, respond_to int64) (closest_preceeding *node.Node){
 	closest_preceeding = nil
 
+	log.Println("Searching for closest preceeding node.....")
 	for i := len(node_obj.FingerTable)-1; i >= 0; i-- {
 		map_lock.Lock()
 		if node_obj.FingerTable[int64(i)] != nil {
@@ -385,6 +374,29 @@ func FindClosestPreceedingNode(node_obj *node.Node, respond_to int64) (closest_p
 	return
 }
 
+/*
+Refreshes the finger table.
+node_obj is the node that should refresh its table entries
+*/
+func FixRingFingers(node_obj *node.Node){
+
+	for i :=0; i < len(node_obj.FingerTable); i++ {
+		//find the successor for target id n.id + 2^i for the ith entry
+		FindRingSuccessor(node_obj, int64(node_obj.ChannelId) + int64(math.Exp2(float64(i))))
+		log.Printf("\nLooking for %d's successor at entry %d for Node %d\n", 
+			int64(node_obj.ChannelId) + int64(math.Exp2(float64(i))), i, node_obj.ChannelId)
+		//wait to recieve the successor result from find successor
+		map_lock.Lock()
+		entry_successor := <- ring_nodes_bucket[node_obj.ChannelId]
+		log.Printf("\nRecieved successor %d for entry %d\n", entry_successor.ChannelId, i)
+		map_lock.Unlock()
+		map_lock.Lock()
+		node_obj.FingerTable[int64(i)] = entry_successor
+		map_lock.Unlock()
+	}
+	log.Printf("\nNode %d updated to the following: \n")
+	print_node(node_obj)
+}
 
 /*
 This is a routine that defines a node. The routine listens on the channel that is assigned
@@ -457,8 +469,11 @@ func net_node(channel_id int64){
 					}
 				} else if message.Do == "ring-notify" {
 
-					Notify(&node_obj, message.RespondTo)
-
+					if node, ok := ring_nodes.Load(message.RespondTo); ok != true {
+						Notify(&node_obj, node)
+					}else{
+						log.Printf("\nNode %d is not responding...not in ring\n", message.RespondTo)
+					}
 				} else if message.Do == "find-ring-successor" {
 					//respond-to contains the "sponsor" of this request
 					if sponsor_node, ok := ring_nodes.Load(message.RespondTo); ok{
@@ -473,7 +488,10 @@ func net_node(channel_id int64){
 					}else{
 						log.Printf("\nRespondTo node: %d does not exist in the ring for find precedessor\n", message.RespondTo)
 					}
+				}else if message.Do == "fix-ring-fingers"{
+					FixRingFingers(&node_obj)
 				}
+
 				/*else if (message.Do == "put"){
 					respond_to_node_id = struct_message.RespondTo
 					data  = struct_message.Data
@@ -587,6 +605,8 @@ func coordinator(prog_args []string){
 				}
 				channel_id = random_network_id
 
+			}else if message.Do == "fix-ring-fingers" {
+				channel_id = random_ring_id
 			}else{
 				channel_id = random_ring_id
 
