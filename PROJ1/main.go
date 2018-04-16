@@ -463,6 +463,29 @@ func FixRingFingers(node_obj *node.Node){
 }
 
 
+//Stabilize ...
+func Stabilize(n *node.Node) {
+	x := n.Successor
+	var message = msg.Message {Do:"find-ring-predecessor", TargetId: x, RespondTo: n.ChannelId}
+    string_message, err := json.Marshal(message)
+    check_error(err)
+	SendDataToNetwork(n.ChannelId, string(string_message))
+	
+	x = GetDataFromBucket(n.ChannelId)
+	
+	if x > n.ChannelId && x < n.Successor {
+		n.Successor = x
+	}
+	log.Println(n.Successor, n.ChannelId)
+
+	message = msg.Message {Do: "ring-notify", RespondTo: n.ChannelId}
+	string_message, err = json.Marshal(message)
+    check_error(err)
+}
+
+
+
+
 /*
 This function removes data from the chord ring.
 
@@ -570,6 +593,8 @@ func net_node(channel_id int64){
 				}else if message.Do == "set-successor" {
 					//Set the successor as the target id
 					node_obj.Successor = message.TargetId
+				} else if message.Do == "stabilize" {
+					Stabilize(&node_obj)
 				}
 
 				if execute_fix_fingers == true {
@@ -726,6 +751,7 @@ func coordinator(prog_args []string){
 			check_error(err)
 			// Give a random node instructions 
 			network[channel_id] <- string(modified_inst)
+			time.Sleep(3 * time.Second)
 	}
 
 	//Every 7 seconds, tell someone to fix their fingers
