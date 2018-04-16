@@ -90,7 +90,7 @@ var ring_nodes = NewRingNodesMap()
 This is a blocking map that has channels for each node in the network. This ring_node_values map can be used
 for nodes in the ring to recieve node objects.
 */
-var ring_nodes_bucket = make(map[int64](chan int64))
+var ring_nodes_bucket = make(map[int64](chan string))
 /*
 This is the global sync group to handle the goroutines properly
 */
@@ -212,7 +212,7 @@ func init_topology(){
 		network[int64(id)] = make(chan string, 100)
 		map_lock.Unlock()
 		map_lock.Lock()
-		ring_nodes_bucket[int64(id)] = make(chan int64, 5)
+		ring_nodes_bucket[int64(id)] = make(chan string, 5)
 		map_lock.Unlock()
 		//start up node
 		id_64 := int64(id)
@@ -232,21 +232,9 @@ func Notify(node_obj *node.Node, predecessor int64){
 
 	//If node_obj already has a predecessor check to see if the predecessor is even closer to the node_obj.ChannelId
 	//Than the existing node_obj's Predecessor
-	if node_obj.Predecessor != -1 {
-		if predecessor > node_obj.Predecessor && predecessor < node_obj.ChannelId {
+	if node_obj.Predecessor == -1 || predecessor > node_obj.Predecessor && predecessor < node_obj.ChannelId {
 				node_obj.Predecessor = predecessor
 		}
-
-	// If node_obj does not have a predecessor yet, then assign predecessor as node_objs PRedecessor
-	// As long as predecessor < node_obj.ChannelId
-	}else if node_obj.Predecessor == -1 {
-		if predecessor < node_obj.ChannelId {
-				node_obj.Predecessor = predecessor
-		}else{
-		
-	log.Printf("\nPredecessor: %d is greater than Node %d. %d must be < %d", predecessor, node_obj.Predecessor, predecessor, node_obj.Predecessor)
-		}
-	}
 }
 
 func GetNodeRoutineObj(node_id int64)(ring_node *node.Node){
@@ -257,18 +245,30 @@ func GetNodeRoutineObj(node_id int64)(ring_node *node.Node){
 /*
 This function sends data to a node_id's bucket
 */
-func SendDataToBucket(node_id int64, bucket_data int64){
+func SendDataToBucket(node_id int64, bucket_data string){
 	log.Printf("\nBUCKET:Node: %d was written bucket data\n", node_id)
 	map_lock.Lock()
 	ring_nodes_bucket[node_id] <- bucket_data
 	map_lock.Unlock()
 	return
 }
+
+/*
+Returns the identifier field as int64 from a given BucketMessage formatted json string
+*/
+func ExtractIdFromBucketData(data string)(identifier int64){
+	byte_msg := []byte(data)
+	var message msg.BucketMessage
+	err := json.Unmarshal(byte_msg, &message)
+	check_error(err)
+	identifier = message.Identifier
+	return
+}
 /*
 This function recieves data from the designated bucket.
 The node id given is used to read the correct bucket
 */
-func GetDataFromBucket(node_id int64)(bucket_data int64){
+func GetDataFromBucket(node_id int64)(bucket_data string){
 	log.Printf("\nBUCKET:Node: %d's  data is being read ....\n", node_id)
 	bucket_data = <- ring_nodes_bucket[node_id]
 	log.Printf("\nBUCKET:Node: %d's data has finished being read ....\n", node_id)
@@ -316,7 +316,8 @@ func Join_ring(sponsoring_node_id int64, node_obj *node.Node){
 	//Tell sponsoring_node_id to find the successor of the node_obj
 	SendDataToNetwork(sponsoring_node_id, string(string_message))
 	//Wait to hear back what the successor is
-	successor := GetDataFromBucket(sponsoring_node_id)
+	bucket_data := GetDataFromBucket(sponsoring_node_id)
+	successor := ExtractIdFromBucketData(bucket_data)
 	if successor != -1 {
 		node_obj.Successor = successor
 	}else{
@@ -339,7 +340,8 @@ func FindRingPredecessor(node_obj *node.Node, target_id int64, respond_to int64)
 	// While the target id is not between the 
 	for !(target_id > potential_predecessor.ChannelId && target_id < potential_predecessor.Successor){
 		FindClosestPreceedingNode(potential_predecessor, target_id) //find the closest preceeding node from the target-id
-		potential_predecessor_id := GetDataFromBucket(node_obj.ChannelId)
+		bucket_data := GetDataFromBucket(node_obj.ChannelId)
+		potential_predecessor_id := ExtractIdFromBucketData(bucket_data)
 		potential_predecessor = GetNodeRoutineObj(potential_predecessor_id)
 		//If the potential predecessor is equal to the node
 		//that sponsored finding the predecessor...
@@ -347,12 +349,18 @@ func FindRingPredecessor(node_obj *node.Node, target_id int64, respond_to int64)
 			if node_obj.ChannelId < target_id {
 				//Tell the node_obj (respond to node) that
 				//the predecessor of target_id is node_obj
-				SendDataToBucket(respond_to, node_obj.ChannelId)
+				var bucket_msg =  msg.BucketMessage {Identifier: node_obj.ChannelId}
+				string_message, err := json.Marshal(bucket_msg)
+    				check_error(err)
+				SendDataToBucket(respond_to, string(string_message))
 				return
 			}
 		}
 	}
-	SendDataToBucket(node_obj.ChannelId, node_obj.ChannelId)
+	var bucket_msg =  msg.BucketMessage {Identifier: node_obj.ChannelId}
+	string_message, err := json.Marshal(bucket_msg)
+	check_error(err)
+	SendDataToBucket(node_obj.ChannelId, string(string_message))
 	return 
 }
 
@@ -368,6 +376,7 @@ func Stabilize(node_obj *node.Node){
 	//If node_objs successor is itself, we can just get the 
 	//predecessor directly
 	if node_obj.Successor == node_obj.ChannelId {
+		log.Printf("\nSTABILIZE: Node %d's successor is itself...\n", node_obj.ChannelId)
 		x = node_obj.Predecessor
 	}else{
 		//Send a message that you are looking for the
@@ -376,9 +385,11 @@ func Stabilize(node_obj *node.Node){
 	    	string_message, err := json.Marshal(message)
 	    	check_error(err)
 		SendDataToNetwork(node_obj.Successor, string(string_message))
-	
+		log.Printf("\nSTABILIZE: To Stabilize Node %d, told %d to return predecessor\n", node_obj.ChannelId, node_obj.Successor)
 		//Listen for the response containing the predecessor id
-		x = GetDataFromBucket(node_obj.ChannelId)
+		bucket_data := GetDataFromBucket(node_obj.ChannelId)
+		x = ExtractIdFromBucketData(bucket_data)
+		log.Printf("\nSTABILIZE: Got %ds predecessor as %d\n", node_obj.Successor, x)
 
 	}
 
@@ -388,6 +399,7 @@ func Stabilize(node_obj *node.Node){
 	}
 
 	//Tell node_obj.Successor that node_obj may be the predecessor
+	log.Printf("\nSTABILIZE: Node %d is Telling Node %d to perform Notify\n", node_obj.ChannelId, node_obj.Successor)
 	var message = msg.Message {Do:"ring-notify", RespondTo: node_obj.ChannelId}
 	string_message, err := json.Marshal(message)
 	check_error(err)
@@ -420,13 +432,19 @@ func FindRingSuccessor(node_obj *node.Node, target_id int64, respond_to int64) i
 		log.Printf("\nFIND_SUCCESSOR:FOUND a place in between for %d using find successor\n", target_id)
 
 		//Tell node_obj that node_obj.Successor is target-ids successor (node_obj is equilvalent to respond-to)
-		SendDataToBucket(respond_to, node_obj.Successor)
+		var bucket_msg =  msg.BucketMessage {Identifier: node_obj.Successor}
+		string_message, err := json.Marshal(bucket_msg)
+		check_error(err)
+		SendDataToBucket(respond_to, string(string_message))
 		return 0
 
 	}else if node_obj.ChannelId == node_obj.Successor {
 
 		//Tell the respond-to that the successor is the nodes successor
-		SendDataToBucket(respond_to, node_obj.Successor)
+		var bucket_msg =  msg.BucketMessage {Identifier: node_obj.Successor}
+		string_message, err := json.Marshal(bucket_msg)
+		check_error(err)
+		SendDataToBucket(respond_to, string(string_message))
 		return 0
 
 	}else{
@@ -437,13 +455,17 @@ func FindRingSuccessor(node_obj *node.Node, target_id int64, respond_to int64) i
 		//Tell the sponsoring node_obj to Find the closest preceeding node of target_id
 		//SendDataToNetwork(node_obj.ChannelId, string(string_message))
 		FindClosestPreceedingNode(node_obj, target_id)
-		closest_preceeding := GetDataFromBucket(node_obj.ChannelId)
+		bucket_data := GetDataFromBucket(node_obj.ChannelId)
+		closest_preceeding := ExtractIdFromBucketData(bucket_data)
 		log.Printf("\nFIND_SUCCESSOR: Node %d Found the closest preceeding node of %d to be %d\n", node_obj.ChannelId, target_id, closest_preceeding)
 		next_successor := GetNodeRoutineObj(closest_preceeding)
 
 		//If the closest preceeding node is the node that initiated the request..then just return the nodes successor
 		if closest_preceeding == node_obj.ChannelId {
-			SendDataToBucket(respond_to, node_obj.Successor)
+			var bucket_msg =  msg.BucketMessage {Identifier: node_obj.Successor}
+			string_message, err := json.Marshal(bucket_msg)
+			check_error(err)
+			SendDataToBucket(respond_to, string(string_message))
 			return 0
 		}
 		return FindRingSuccessor(next_successor, target_id, respond_to)
@@ -466,16 +488,24 @@ func FindClosestPreceedingNode(node_obj *node.Node, target_id int64){
 	for i := len(node_obj.FingerTable)-1; i >= 0; i-- {
 		finger_entry := ReadNodeFingerTable(node_obj, int64(i))
 		if finger_entry != -1 {
-			if (finger_entry < node_obj.ChannelId && target_id > finger_entry) {
-			
-			closest_preceeding := ReadNodeFingerTable(node_obj, int64(i))
-			SendDataToBucket(node_obj.ChannelId, closest_preceeding)
-			return
+			if (finger_entry < node_obj.ChannelId && target_id > finger_entry) {			
+				//Send the closest preceeding id to the respond-to node that requested it
+				closest_preceeding := ReadNodeFingerTable(node_obj, int64(i))
+				var bucket_msg =  msg.BucketMessage {Identifier: closest_preceeding}
+				string_message, err := json.Marshal(bucket_msg)
+				check_error(err)
+				SendDataToBucket(node_obj.ChannelId, string(string_message))
+				return
 			}
 		}
 		
 	}
-	SendDataToBucket(node_obj.ChannelId, closest_preceeding)
+	
+	//Send closest proceeding to respond-to
+	var bucket_msg =  msg.BucketMessage {Identifier: closest_preceeding}
+	string_message, err := json.Marshal(bucket_msg)
+	check_error(err)
+	SendDataToBucket(node_obj.ChannelId, string(string_message))
 	return
 }
 
@@ -491,7 +521,8 @@ func FixRingFingers(node_obj *node.Node){
 		log.Printf("\nFIX_FINGERS:Looking for %d's successor at entry %d for Node %d\n", 
 			int64(node_obj.ChannelId) + int64(math.Exp2(float64(i))), i, node_obj.ChannelId)
 		//wait to recieve the successor result from find successor
-		entry_successor := GetDataFromBucket(node_obj.ChannelId)
+		bucket_data := GetDataFromBucket(node_obj.ChannelId)
+		entry_successor := ExtractIdFromBucketData(bucket_data)
 		log.Printf("\nFIX_FINGERS:Recieved successor %d for entry %d\n", entry_successor, i)
 		map_lock.Lock()
 		node_obj.FingerTable[int64(i)] = entry_successor
@@ -618,15 +649,19 @@ func net_node(channel_id int64){
 				//Give the predecessor to the respond-to node
 				// {do: get-predecessor, respond-to: respond-to}
 				}else if message.Do == "get-predecessor" {
-					SendDataToBucket(message.RespondTo, node_obj.Predecessor)
+					var bucket_msg =  msg.BucketMessage {Identifier: node_obj.Predecessor}
+					string_message, err := json.Marshal(bucket_msg)
+					check_error(err)
+					SendDataToBucket(message.RespondTo, string(string_message))
 				}
 
 				if execute_fix_fingers == true {
 					SendDataToNetwork(node_obj.ChannelId, "{\"do\": \"fix-ring-fingers\"}")
-				}
+				}else{
 
-				if execute_stabilize_ring == true {
-					SendDataToNetwork(node_obj.ChannelId, "{\"do\": \"stabilize-ring\"}")
+					if execute_stabilize_ring == true {
+						SendDataToNetwork(node_obj.ChannelId, "{\"do\": \"stabilize-ring\"}")
+					}
 				}
 				/*else if message.Do == "put" {
 					respond_to_node_id = struct_message.RespondTo
