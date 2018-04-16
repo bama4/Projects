@@ -322,6 +322,7 @@ func Join_ring(sponsoring_node_id int64, node_obj *node.Node){
 	//Wait to hear back what the successor is
 	bucket_data := GetDataFromBucket(sponsoring_node_id)
 	successor := ExtractIdFromBucketData(bucket_data)
+	FixRingFingers(node_obj)
 	if successor != -1 {
 		node_obj.Successor = successor
 	}else{
@@ -384,7 +385,8 @@ func Stabilize(node_obj *node.Node){
 		x = node_obj.Predecessor
 	}else{
 		//Send a message that you are looking for the
-		//predecessor of node_obj.Successor
+		//predecessor of node_obj.Successor to see if node_obj.Successor.Predecessor
+		//Should instead be node_obj's.Sucessor
 		var message = msg.Message {Do:"get-predecessor", RespondTo: node_obj.ChannelId}
 	    	string_message, err := json.Marshal(message)
 	    	check_error(err)
@@ -410,6 +412,16 @@ func Stabilize(node_obj *node.Node){
 	SendDataToNetwork(node_obj.Successor, string(string_message))
 
 }
+
+/*
+This is the implementation of init-ring-fingers
+{do: init-ring-fingers, respond-to: sucessor}
+
+func InitRingFingers(node_obj *node.Node, respond_to int64) {
+	limit := int(math.Log2(float64(node_obj.Sucessor - node_obj.ChannelId)) + 1
+	log.Printf()
+
+}*/
 
 /*
 / ask node n to find the successor of id
@@ -566,7 +578,7 @@ func net_node(channel_id int64){
 				   DataTable:make(map[string]string)}
 
 	var wait_time = int(responsetime.GetResponseTime(mean_wait_value))
-	//Initialize table to size N where 2^N is the number of nodes
+	//Initialize table to size NF where 2^N is the number of nodes
 	init_ring_fingers.Init_Ring_FingerTable(&node_obj, int(math.Log2(float64(number_of_network_nodes))))
 	//If ring is empty just add this node to the ring
 	//This is the first node to enter the ring. Make this node's successor itself.
@@ -639,6 +651,12 @@ func net_node(channel_id int64){
 				}else if message.Do == "fix-ring-fingers"{
 					FixRingFingers(&node_obj)
 
+				//The node that recieves this message is the node
+				//That needs to have its fingers built.
+				//the respond-to field added on is the nodes successor
+				}else if message.Do == "init-ring-fingers"{
+					//InitRingFingers(&node_obj, message.RespondTo)
+					
 				}else if message.Do == "stabilize-ring"{
 					Stabilize(&node_obj)			
 
