@@ -1,7 +1,7 @@
 import "fmt"
 import msg "./utils/message_defs"
 import node "./utils/node_defs"
-import "strconv"
+import "bytes"
 
 
 //{"do": "put", "data": { "key" : "a key", "value" : "a value" }, "respond-to": "channel-id"}
@@ -31,6 +31,12 @@ func Put(data *msg.Data, respond_to int64) {
 	// Biggest keyvalu
 	var biggest = 0
 
+	// Buffer
+
+	var buffer bytes.Buffer
+
+	buffer.WriteString("Putting data at node "
+
 	// Get the node ID for data string
 	var node_id = map_to_string_id(data.Key)
 
@@ -47,6 +53,9 @@ func Put(data *msg.Data, respond_to int64) {
 		if k == node_id {
 			// We have a direct mapping for the key, go to this node
 			v.DataTable[data.Key] := data.Value
+			buffer.WriteString(string(node_id))
+			network[respond_to] <- buffer.String()	
+			return
 
 		} else {
 			// It's not in our finger table
@@ -54,10 +63,11 @@ func Put(data *msg.Data, respond_to int64) {
 			//var biggest = find_biggest_node(&FingerTable, node_id)		
 			var closest_node = FindClosestPreceedingNode(&v, k)
 			closest_node.DataTable[data.Key] := data.Value
+			buffer.WriteString(string(closest_node.Key))
+			network[respond_to] <- buffer.String()
 		}		
 	}
 
-	network[respond_to] <- "Putting data at node xx"
-
+//	network[respond_to] <- "Putting data at node xx"
 
 }
