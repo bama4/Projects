@@ -525,7 +525,8 @@ func net_node(channel_id int64){
 					log.Printf("Node: %d failed to unmarshal the json string", channel_id)
 					break
 				}
-
+				//Randomly choose when to execute fix fingers
+				execute_fix_fingers := get_random_int() % 2 == 0
 				//Perform join-ring action
 				if message.Do == "join-ring" {
 					if val, ok := ring_nodes.Load(channel_id); ok != true {
@@ -533,11 +534,6 @@ func net_node(channel_id int64){
 						sponsoring_node_id := message.SponsoringNode
 						Join_ring(sponsoring_node_id, &node_obj)
 						ring_nodes.Store(channel_id, &node_obj)
-						execute_fix_fingers := get_random_int() % 2 == 0
-						//Randomly tell the joining node to fix its fingers
-						if execute_fix_fingers == true {
-							SendDataToNetwork(node_obj.ChannelId, "{\"do\": \"fix-ring-fingers\"}")
-						}
 					}else{
 						log.Printf("\nNode %d is already in the ring; cannot join-ring\n", channel_id)
 					}
@@ -556,10 +552,6 @@ func net_node(channel_id int64){
 					//respond-to is the node that recieves the answer of find ring successor
 					if sponsor_node, ok := ring_nodes.Load(message.RespondTo); ok{
 						FindRingSuccessor(sponsor_node, message.TargetId, message.RespondTo)
-						execute_fix_fingers := get_random_int() % 2 == 0
-						if execute_fix_fingers == true {
-							SendDataToNetwork(node_obj.ChannelId, "{\"do\": \"fix-ring-fingers\"}")
-						}
 					}else{
 						log.Printf("\nRespondTo node: %d is not responding...not in ring?\n", message.RespondTo)
 
@@ -580,6 +572,9 @@ func net_node(channel_id int64){
 					node_obj.Successor = message.TargetId
 				}
 
+				if execute_fix_fingers == true {
+					SendDataToNetwork(node_obj.ChannelId, "{\"do\": \"fix-ring-fingers\"}")
+				}
 				/*else if message.Do == "put" {
 					respond_to_node_id = struct_message.RespondTo
 					data  = struct_message.Data
@@ -596,8 +591,9 @@ func net_node(channel_id int64){
 				}
 				*/
 				print_ring_nodes()
+
 			default:
-				time.Sleep(1)
+				time.Sleep(5)
 		}
 	}
 
@@ -730,6 +726,12 @@ func coordinator(prog_args []string){
 			check_error(err)
 			// Give a random node instructions 
 			network[channel_id] <- string(modified_inst)
+	}
+
+	//Every 7 seconds, tell someone to fix their fingers
+	for true {
+
+
 	}
 	
 }
