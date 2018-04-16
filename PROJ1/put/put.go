@@ -29,14 +29,12 @@ func find_biggest_node(finger_table *map[int64]*Node, node_id int64)(biggest int
 
 func Put(data *msg.Data, respond_to int64) {
 
-	// Biggest keyvalu
-	var biggest = 0
-
-	// Buffer
 
 	var buffer bytes.Buffer
+	var found = false
+	var closest_node = nil
 
-	buffer.WriteString("Putting data at node "
+	buffer.WriteString("Putting data at node ")
 
 	// Get the node ID for data string
 	var node_id = map_to_string_id(data.Key)
@@ -45,30 +43,24 @@ func Put(data *msg.Data, respond_to int64) {
 	if ChannelId == node_id {
 		DataTable[data.Key] := data.Value
 		return 
-	}
-
-	// Look in current node (this) fingertable	
-	// FingerTable is map[int64]*node
-	// Key is entry , value is node that has it
-	for k, v := range FingerTable {
-		if k == node_id {
-			// We have a direct mapping for the key, go to this node
-			v.DataTable[data.Key] := data.Value
-			buffer.WriteString(string(node_id))
-			network[respond_to] <- buffer.String()	
-			return
-
-		} else {
-			// It's not in our finger table
-			// Go to the biggest node without overshooting
-			//var biggest = find_biggest_node(&FingerTable, node_id)		
-			var closest_node = FindClosestPreceedingNode(&v, k)
+	} else {
+		for k, v := range FingerTable {
+			if k == node_id {
+				v.DataTable[data.Key] := data.Value
+				buffer.WriteString(string(node_id))
+				network[respond_to] <- buffer.String()
+				found = true
+				break
+			}
+		}	
+		// It's not in our fingertable at all, so we need to go to the next highest node without
+		// overshooting	
+		if found == false {
+			closest_node = FindClosestPreceedingNode(&FingerTable, data.Key)
 			closest_node.DataTable[data.Key] := data.Value
-			buffer.WriteString(string(closest_node.Key))
+			buffer.WriteString(string(closest_node.ChannelID))
 			network[respond_to] <- buffer.String()
-		}		
+		}
 	}
-
-//	network[respond_to] <- "Putting data at node xx"
-
+	//	network[respond_to] <- "Putting data at node xx"
 }
