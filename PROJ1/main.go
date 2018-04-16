@@ -582,6 +582,9 @@ func net_node(channel_id int64){
 				}else if message.Do == "set-successor" {
 					//Set the successor as the target id
 					node_obj.Successor = message.TargetId
+				} else if message.Do == "set-predecessor" {
+
+					node.obj.Predecessor = message.TargetId
 				}
 
 				/*else if message.Do == "put" {

@@ -18,9 +18,14 @@ func Leave_ring(node *chord.Node, mode string) {
 			log.Printf("\nNode: %d is leaving orderly\n", node.ChannelId)
 
 			// Notify Successor and pRedecessor we are leaving
-			var leaving_msg = "Leaving Ring"
+			var leaving_msg = msg.Message {Do:"leaving", TargetId:node.ChannelId}
+			//var leave_succ = msg.Message {Do:"set-successor", TargetId:node.ChannelID }
+			var leave_pred = msg.Message {Do:"set-predecessor", TargetId:node.Successor }
+
 			SendDataToNetwork(node.Successor, leaving_msg)
 			SendDataToNetwork(node.Predecessor, leaving_msg)
+			//SendDataToNetwork(node.Predecessor, leave_succ)
+			SendDataToNetwork(node.Successor, leave_pred)
 			
 			// Loop through current nodes DataTable to append to successor
 			for k, v := range node.DataTable {
