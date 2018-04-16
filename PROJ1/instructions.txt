@@ -3,4 +3,12 @@
 {"do":"join-ring"}
 {"do":"join-ring"}
 {"do":"join-ring"}
-{"do":"fix-ring-fingers"}
+{"do":"join-ring"}
+{"do":"join-ring"}
+{"do":"join-ring"}
+{"do":"join-ring"}
+{"do":"join-ring"}
+{"do":"join-ring"}
+{"do":"join-ring"}
+
+
