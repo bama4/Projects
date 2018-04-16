@@ -213,39 +213,24 @@ func init_topology(){
 }
 
 /*
-The predecessor_id is the id of the node that is the predecesor of the node_obj
+The predecessor is the id of the node that is the predecesor of the node_obj
 */
-func Notify(node_obj *node.Node, predecessor_id int64){
+func Notify(node_obj *node.Node, predecessor *node.Node){
 
-
-	//If the predecessor id is not in the ring, then this is a problem
-	 if val, ok := ring_nodes.Load(predecessor_id); ok != true {
-		_ = val
-		log.Printf("\nCannot add %d as a predecessor to %d; %d is not in the ring\n", predecessor_id, node_obj.Predecessor, predecessor_id)
-		return
-	}
-	//If node_obj already has a predecessor check to see if the predecessor_id is even closer to the node_obj.ChannelId
+	//If node_obj already has a predecessor check to see if the predecessor is even closer to the node_obj.ChannelId
 	//Than the existing node_obj's Predecessor
 	if node_obj.Predecessor != nil {
-		if predecessor_id > node_obj.Predecessor.ChannelId && predecessor_id < node_obj.ChannelId {
-			if val, ok := ring_nodes.Load(predecessor_id); ok {
-				node_obj.Predecessor = val
-			}else{
-				log.Printf("\nNode %d is not in the ring\n")
-			}
+		if predecessor.ChannelId > node_obj.Predecessor.ChannelId && predecessor.ChannelId < node_obj.ChannelId {
+				node_obj.Predecessor = predecessor
 		}
 
-	// If node_obj does not have a predecessor yet, then assign predecessor_id as node_objs PRedecessor
-	// As long as predecessor_id < node_obj.ChannelId
+	// If node_obj does not have a predecessor yet, then assign predecessor as node_objs PRedecessor
+	// As long as predecessor < node_obj.ChannelId
 	}else if node_obj.Predecessor == nil {
-		if predecessor_id < node_obj.ChannelId {
-			if val, ok := ring_nodes.Load(predecessor_id); ok {
-				node_obj.Predecessor = val
-			}else{
-				log.Printf("\nNode %d is not in the ring\n")
-			}
+		if predecessor.ChannelId < node_obj.ChannelId {
+				node_obj.Predecessor = predecessor
 		}else{
-			log.Printf("\nPredecessor: %d is greater than Node %d. %d must be < %d", predecessor_id, node_obj.Predecessor, predecessor_id, node_obj.Predecessor)
+			log.Printf("\nPredecessor: %d is greater than Node %d. %d must be < %d", predecessor.ChannelId, node_obj.Predecessor, predecessor.ChannelId, node_obj.Predecessor)
 		}
 	}
 }
@@ -450,8 +435,11 @@ func net_node(channel_id int64){
 					}
 				} else if message.Do == "ring-notify" {
 
-					Notify(&node_obj, message.RespondTo)
-
+					if node, ok := ring_nodes.Load(message.RespondTo); ok != true {
+						Notify(&node_obj, node)
+					}else{
+						log.Printf("\nNode %d is not responding...not in ring\n", message.RespondTo)
+					}
 				} else if message.Do == "find-ring-successor" {
 					//respond-to contains the "sponsor" of this request
 					if sponsor_node, ok := ring_nodes.Load(message.RespondTo); ok{
