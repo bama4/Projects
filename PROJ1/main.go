@@ -155,6 +155,9 @@ func get_random_ring_node() (rand_num int64) {
 /*Gets a random node in the network
 */
 func get_random_network_node() (rand_num int64){
+	defer map_lock.Unlock()
+
+    map_lock.Lock()
     for(true){
         rand_num := rand.Intn(number_of_network_nodes)
         //If we generated a channel id that is in use in the network, return the number
@@ -178,13 +181,14 @@ func get_random_int()(rand_num int){
 Generates a unique channel id that is not already in the network
 */
 func generate_channel_id() (rand_num int64){
-
+	defer map_lock.Unlock()
 	rand_num = 0
 	if len(network) == number_of_network_nodes {
 		//cant generate a unique id
 		return -1
 	}
 
+	map_lock.Lock()
 	for(true){
 		rand_num := rand.Intn(number_of_network_nodes)
 		//If we generated a channel id that is not in use
@@ -488,7 +492,8 @@ func FindClosestPreceedingNode(node_obj *node.Node, target_id int64){
 	for i := len(node_obj.FingerTable)-1; i >= 0; i-- {
 		finger_entry := ReadNodeFingerTable(node_obj, int64(i))
 		if finger_entry != -1 {
-			if (finger_entry < node_obj.ChannelId && target_id > finger_entry) {			
+			//If the entry is 
+			if (finger_entry > node_obj.ChannelId && target_id > finger_entry) {			
 				//Send the closest preceeding id to the respond-to node that requested it
 				closest_preceeding := ReadNodeFingerTable(node_obj, int64(i))
 				var bucket_msg =  msg.BucketMessage {Identifier: closest_preceeding}
@@ -535,7 +540,8 @@ func FixRingFingers(node_obj *node.Node){
 
 /*
 This function removes data from the chord ring.
-
+*/
+/*
 func RemoveData(node_obj *node.Node, data Data, respond_to int64){
 	id = map_string_to_int(data.Key)
 	FindClosestPrecedingNode()
@@ -554,8 +560,8 @@ func net_node(channel_id int64){
 	//successor/predecessor references, etc.
 	//Initializing finger and datatable
 	var node_obj = node.Node {ChannelId: channel_id,
-				   Successor: -1,
-				   Predecessor: -1,
+				   Successor: channel_id,
+				   Predecessor: channel_id,
 				   FingerTable:make(map[int64]int64),
 				   DataTable:make(map[string]string)}
 
@@ -655,12 +661,16 @@ func net_node(channel_id int64){
 					SendDataToBucket(message.RespondTo, string(string_message))
 				}
 
-				if execute_fix_fingers == true {
-					SendDataToNetwork(node_obj.ChannelId, "{\"do\": \"fix-ring-fingers\"}")
-				}else{
+				//Randomly cause a to fix fingers/execute stabilize
+				random_ring_node := get_random_ring_node()
+				if random_ring_node != -1 {
+					if execute_fix_fingers == true {
+						SendDataToNetwork(random_ring_node, "{\"do\": \"fix-ring-fingers\"}")
+					}else{
 
-					if execute_stabilize_ring == true {
-						SendDataToNetwork(node_obj.ChannelId, "{\"do\": \"stabilize-ring\"}")
+						if execute_stabilize_ring == true {
+							SendDataToNetwork(random_ring_node, "{\"do\": \"stabilize-ring\"}")
+						}
 					}
 				}
 				/*else if message.Do == "put" {
@@ -790,7 +800,7 @@ func coordinator(prog_args []string){
 			}
 			//format join ring instruction with random sponsoring node
 			if message.Do == "join-ring" {
-
+				random_ring_id = get_random_ring_node()
 				if random_ring_id > 0 {
 					message.SponsoringNode = random_ring_id
 				}else{
@@ -812,8 +822,11 @@ func coordinator(prog_args []string){
 
 			modified_inst, err := json.Marshal(message)
 			check_error(err)
-			// Give a random node instructions 
+			// Give a random node instructions
+			map_lock.Lock()
 			network[channel_id] <- string(modified_inst)
+			map_lock.Unlock()
+			time.Sleep(3)
 	}
 
 	//Every 7 seconds, tell someone to fix their fingers
