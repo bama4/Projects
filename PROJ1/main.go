@@ -392,14 +392,21 @@ func FindRingSuccessor(node_obj *node.Node, target_id int64, respond_to int64) i
 
 	}else{
 		log.Printf("\nFIND_SUCCESSOR:STILL NEED TO FIND a successor for %d and tell %d\n", target_id, respond_to)
-		 var message = msg.Message {Do:"find-closest-preceeding-node", TargetId: target_id, RespondTo: node_obj.ChannelId}
-    		string_message, err := json.Marshal(message)
-    		check_error(err)
+		// var message = msg.Message {Do:"find-closest-preceeding-node", TargetId: target_id, RespondTo: node_obj.ChannelId}
+    		//string_message, err := json.Marshal(message)
+    		//check_error(err)
 		//Tell the sponsoring node_obj to Find the closest preceeding node of target_id
-		SendDataToNetwork(node_obj.ChannelId, string(string_message))
+		//SendDataToNetwork(node_obj.ChannelId, string(string_message))
+		FindClosestPreceedingNode(node_obj, target_id)
 		closest_preceeding := GetDataFromBucket(node_obj.ChannelId)
 		log.Printf("\nFIND_SUCCESSOR: Node %d Found the closest preceeding node of %d to be %d\n", node_obj.ChannelId, target_id, closest_preceeding)
 		next_successor := GetNodeRoutineObj(closest_preceeding)
+
+		//If the closest preceeding node is the node that initiated the request..then just return the nodes successor
+		if closest_preceeding == node_obj.ChannelId {
+			SendDataToBucket(respond_to, node_obj.Successor)
+			return 0
+		}
 		return FindRingSuccessor(next_successor, target_id, respond_to)
 	}
 }
@@ -549,6 +556,10 @@ func net_node(channel_id int64){
 					//respond-to is the node that recieves the answer of find ring successor
 					if sponsor_node, ok := ring_nodes.Load(message.RespondTo); ok{
 						FindRingSuccessor(sponsor_node, message.TargetId, message.RespondTo)
+						execute_fix_fingers := get_random_int() % 2 == 0
+						if execute_fix_fingers == true {
+							SendDataToNetwork(node_obj.ChannelId, "{\"do\": \"fix-ring-fingers\"}")
+						}
 					}else{
 						log.Printf("\nRespondTo node: %d is not responding...not in ring?\n", message.RespondTo)
 
