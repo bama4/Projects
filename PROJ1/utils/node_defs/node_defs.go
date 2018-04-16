@@ -17,7 +17,7 @@ The is_in_ring field indicates if this node is part of the chord ring.
 type Node struct {
 	ChannelId   int64             `json:"channel_id"`
 	DataTable   map[string]string `json:"data"`
-	FingerTable map[int64]*Node   `json:"finger_table"`
-	Successor   *Node             `json:"successor"`
-	Predecessor *Node             `json:"predecessor"`
+	FingerTable map[int64]int64   `json:"finger_table"`
+	Successor   int64             `json:"successor"`
+	Predecessor int64             `json:"predecessor"`
 }

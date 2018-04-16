@@ -14,7 +14,7 @@ func Init_Ring_FingerTable(node *chord.Node, number_of_network_nodes int){
 		for i:=0; i < number_of_network_nodes; i++ {
 			//Should have N entries for a ring or up to 2^N nodes
 			map_lock.Lock()
-			node.FingerTable[int64(i)] = nil
+			node.FingerTable[int64(i)] = -1
 			map_lock.Unlock()
 		}
 	}
