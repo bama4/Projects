@@ -1,6 +1,7 @@
 package leave_ring
 
 import "log"
+import "fmt"
 import chord "../utils/node_defs"
 
 func Leave_ring(node *chord.Node, mode string) {
@@ -17,7 +18,6 @@ func Leave_ring(node *chord.Node, mode string) {
 		case "orderly":
 			log.Printf("\nNode: %d is leaving orderly\n", node.ChannelId)
 			// stuff to tell other nodes
-			
 			
 			// Loop through nodes fingertable to append to successor
 			for k, v := range node.FingerTable {
