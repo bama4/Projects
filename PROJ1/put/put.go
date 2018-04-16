@@ -9,7 +9,7 @@ import "bytes"
 
 // Node gets this message
 // Use all the nodes fields
-
+/*
 func find_biggest_node(finger_table *map[int64]*Node, node_id int64)(biggest int64) {
 
 	var old_k := 0
@@ -25,6 +25,7 @@ func find_biggest_node(finger_table *map[int64]*Node, node_id int64)(biggest int
 	}
 	return
 }
+*/
 
 func Put(data *msg.Data, respond_to int64) {
 
