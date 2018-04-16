@@ -15,6 +15,9 @@ type Message struct {
         TargetId int64 `json:target-id`
         Data Data `json:"data"`
 }
+
+func FindRingSuccessor(node_obj *node.Node, target_id int64, respond_to int64)
+func SendDataToNetwork(node_id int64, msg string){
 */
 
 func Leave_ring(node *chord.Node, mode string) {
@@ -30,15 +33,16 @@ func Leave_ring(node *chord.Node, mode string) {
 			
 		case "orderly":
 			log.Printf("\nNode: %d is leaving orderly\n", node.ChannelId)
-			// stuff to tell other nodes
 
-//			network[node.Successor] <- "Node is leaving"
-//			network[node.Predecessor] <- "Node is leaving"
+			// Notify Successor and pRedecessor we are leaving
 			
 			// Loop through current nodes DataTable to append to successor
 			for k, v := range node.DataTable {
 
-				var message = msg.Message {Do:"store-data", Mode:"orderly", TargetId:node.ChannelID,  Data:{k:v}}
+				var message = msg.Message {Do:"store-data-successor", Data:{k:v}}
+		
+				// Like this ?
+				SendDataToNetwork(node.ChannelID, message)
 			}
 	
 			// remove node from ring
