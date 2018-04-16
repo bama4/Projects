@@ -356,6 +356,45 @@ func FindRingPredecessor(node_obj *node.Node, target_id int64, respond_to int64)
 	return 
 }
 
+
+/*
+This function stabilizes the ring
+it sends a {do: get-predecessor respond-to: node_obj.ChannelId} to the node_obj.Successor
+to tell the node_obj what the node_objs.Successor's Predecessor is
+*/
+func Stabilize(node_obj *node.Node){
+
+	var x int64 = -1
+	//If node_objs successor is itself, we can just get the 
+	//predecessor directly
+	if node_obj.Successor == node_obj.ChannelId {
+		x = node_obj.Predecessor
+	}else{
+		//Send a message that you are looking for the
+		//predecessor of node_obj.Successor
+		var message = msg.Message {Do:"get-predecessor", RespondTo: node_obj.ChannelId}
+	    	string_message, err := json.Marshal(message)
+	    	check_error(err)
+		SendDataToNetwork(node_obj.Successor, string(string_message))
+	
+		//Listen for the response containing the predecessor id
+		x = GetDataFromBucket(node_obj.ChannelId)
+
+	}
+
+	if x > node_obj.ChannelId && x < node_obj.Successor{
+		//Set node_objs Successor to x
+		node_obj.Successor = x
+	}
+
+	//Tell node_obj.Successor that node_obj may be the predecessor
+	var message = msg.Message {Do:"ring-notify", RespondTo: node_obj.ChannelId}
+	string_message, err := json.Marshal(message)
+	check_error(err)
+	SendDataToNetwork(node_obj.Successor, string(string_message))
+
+}
+
 /*
 / ask node n to find the successor of id
 n.find successor(id)
@@ -526,7 +565,8 @@ func net_node(channel_id int64){
 					break
 				}
 				//Randomly choose when to execute fix fingers
-				execute_fix_fingers := get_random_int() % 2 == 0
+				execute_fix_fingers := get_random_int() % 4 == 0
+				execute_stabilize_ring := get_random_int() % 3 == 0
 				//Perform join-ring action
 				if message.Do == "join-ring" {
 					if val, ok := ring_nodes.Load(channel_id); ok != true {
@@ -562,18 +602,31 @@ func net_node(channel_id int64){
 				}else if message.Do == "fix-ring-fingers"{
 					FixRingFingers(&node_obj)
 
+				}else if message.Do == "stabilize-ring"{
+					Stabilize(&node_obj)			
+
 				}else if message.Do == "find-closest-preceeding-node" {
 					//Have node_obj find the closest preceeding node to the target_id
 					FindClosestPreceedingNode(&node_obj, message.TargetId)
 
 				//Tell node to set its successor to target-id
+				//{do: set-successor, target-id: target-id}
 				}else if message.Do == "set-successor" {
 					//Set the successor as the target id
 					node_obj.Successor = message.TargetId
+
+				//Give the predecessor to the respond-to node
+				// {do: get-predecessor, respond-to: respond-to}
+				}else if message.Do == "get-predecessor" {
+					SendDataToBucket(message.RespondTo, node_obj.Predecessor)
 				}
 
 				if execute_fix_fingers == true {
 					SendDataToNetwork(node_obj.ChannelId, "{\"do\": \"fix-ring-fingers\"}")
+				}
+
+				if execute_stabilize_ring == true {
+					SendDataToNetwork(node_obj.ChannelId, "{\"do\": \"stabilize-ring\"}")
 				}
 				/*else if message.Do == "put" {
 					respond_to_node_id = struct_message.RespondTo
