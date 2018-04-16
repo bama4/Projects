@@ -322,6 +322,7 @@ func Join_ring(sponsoring_node_id int64, node_obj *node.Node){
 	//Wait to hear back what the successor is
 	bucket_data := GetDataFromBucket(sponsoring_node_id)
 	successor := ExtractIdFromBucketData(bucket_data)
+	FixRingFingers(node_obj)
 	if successor != -1 {
 		node_obj.Successor = successor
 	}else{
@@ -346,10 +347,9 @@ func FindRingPredecessor(node_obj *node.Node, target_id int64, respond_to int64)
 		FindClosestPreceedingNode(potential_predecessor, target_id) //find the closest preceeding node from the target-id
 		bucket_data := GetDataFromBucket(node_obj.ChannelId)
 		potential_predecessor_id := ExtractIdFromBucketData(bucket_data)
-		potential_predecessor = GetNodeRoutineObj(potential_predecessor_id)
 		//If the potential predecessor is equal to the node
 		//that sponsored finding the predecessor...
-		if potential_predecessor.ChannelId == node_obj.ChannelId{
+		if potential_predecessor_id == node_obj.ChannelId{
 			if node_obj.ChannelId < target_id {
 				//Tell the node_obj (respond to node) that
 				//the predecessor of target_id is node_obj
@@ -384,7 +384,8 @@ func Stabilize(node_obj *node.Node){
 		x = node_obj.Predecessor
 	}else{
 		//Send a message that you are looking for the
-		//predecessor of node_obj.Successor
+		//predecessor of node_obj.Successor to see if node_obj.Successor.Predecessor
+		//Should instead be node_obj's.Sucessor
 		var message = msg.Message {Do:"get-predecessor", RespondTo: node_obj.ChannelId}
 	    	string_message, err := json.Marshal(message)
 	    	check_error(err)
@@ -410,6 +411,16 @@ func Stabilize(node_obj *node.Node){
 	SendDataToNetwork(node_obj.Successor, string(string_message))
 
 }
+
+/*
+This is the implementation of init-ring-fingers
+{do: init-ring-fingers, respond-to: sucessor}
+
+func InitRingFingers(node_obj *node.Node, respond_to int64) {
+	limit := int(math.Log2(float64(node_obj.Sucessor - node_obj.ChannelId)) + 1
+	log.Printf()
+
+}*/
 
 /*
 / ask node n to find the successor of id
@@ -466,7 +477,7 @@ func FindRingSuccessor(node_obj *node.Node, target_id int64, respond_to int64) i
 
 		//If the closest preceeding node is the node that initiated the request..then just return the nodes successor
 		if closest_preceeding == node_obj.ChannelId {
-			var bucket_msg =  msg.BucketMessage {Identifier: node_obj.Successor}
+			var bucket_msg =  msg.BucketMessage {Identifier: node_obj.ChannelId}
 			string_message, err := json.Marshal(bucket_msg)
 			check_error(err)
 			SendDataToBucket(respond_to, string(string_message))
@@ -566,7 +577,7 @@ func net_node(channel_id int64){
 				   DataTable:make(map[string]string)}
 
 	var wait_time = int(responsetime.GetResponseTime(mean_wait_value))
-	//Initialize table to size N where 2^N is the number of nodes
+	//Initialize table to size NF where 2^N is the number of nodes
 	init_ring_fingers.Init_Ring_FingerTable(&node_obj, int(math.Log2(float64(number_of_network_nodes))))
 	//If ring is empty just add this node to the ring
 	//This is the first node to enter the ring. Make this node's successor itself.
@@ -639,6 +650,12 @@ func net_node(channel_id int64){
 				}else if message.Do == "fix-ring-fingers"{
 					FixRingFingers(&node_obj)
 
+				//The node that recieves this message is the node
+				//That needs to have its fingers built.
+				//the respond-to field added on is the nodes successor
+				}else if message.Do == "init-ring-fingers"{
+					//InitRingFingers(&node_obj, message.RespondTo)
+					
 				}else if message.Do == "stabilize-ring"{
 					Stabilize(&node_obj)			
 
@@ -789,6 +806,7 @@ func coordinator(prog_args []string){
 	var channel_id int64
 	for i := 0; i < len(instructions); i++ {
 		//pick a random node in the ring to send the message to.
+		prev_random_ring_id := int64(-1)
 		random_ring_id = get_random_ring_node()
 		random_network_id := get_random_network_node()
 			byte_msg := []byte(instructions[i])
@@ -800,13 +818,12 @@ func coordinator(prog_args []string){
 			}
 			//format join ring instruction with random sponsoring node
 			if message.Do == "join-ring" {
-				random_ring_id = get_random_ring_node()
-				if random_ring_id > 0 {
-					message.SponsoringNode = random_ring_id
-				}else{
-					log.Println("There is no node to sponsor for join ring")
-					continue
+				random_ring_id = -1
+				for random_ring_id == prev_random_ring_id || random_ring_id == -1 {
+					random_ring_id = get_random_ring_node()
 				}
+				message.SponsoringNode = random_ring_id
+				prev_random_ring_id = random_ring_id
 				channel_id = random_network_id
 
 			}else if message.Do == "fix-ring-fingers" {
@@ -827,12 +844,6 @@ func coordinator(prog_args []string){
 			network[channel_id] <- string(modified_inst)
 			map_lock.Unlock()
 			time.Sleep(3)
-	}
-
-	//Every 7 seconds, tell someone to fix their fingers
-	for true {
-
-
 	}
 	
 }
