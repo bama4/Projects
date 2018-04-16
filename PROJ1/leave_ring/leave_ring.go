@@ -3,6 +3,7 @@ package leave_ring
 import "log"
 import chord "../utils/node_defs"
 import msg "../utils/message_defs"
+import "encoding/json"
 
 // func SendDataToBucket(node_id int64, bucket_data int64){
 
@@ -40,9 +41,10 @@ func Leave_ring(node *chord.Node, mode string) {
 			for k, v := range node.DataTable {
 
 				var message = msg.Message {Do:"store-data-successor", Data:{k:v}}
+				var string_msg, _ = json.Marshal(message)
 		
 				// Like this ?
-				SendDataToNetwork(node.ChannelID, message)
+				SendDataToNetwork(node.ChannelID, string_message)
 			}
 	
 			// remove node from ring
