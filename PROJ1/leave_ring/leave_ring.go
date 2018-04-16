@@ -5,25 +5,7 @@ import chord "../utils/node_defs"
 import msg "../utils/message_defs"
 import "encoding/json"
 
-// func SendDataToBucket(node_id int64, bucket_data int64){
-
-/*
-type Message struct {
-        Do string `json:"do"`
-        SponsoringNode int64 `json:"sponsoring-node"`
-        Mode string `json:"mode"`
-        RespondTo int64 `json:"respond-to"`
-        TargetId int64 `json:target-id`
-        Data Data `json:"data"`
-}
-
-func FindRingSuccessor(node_obj *node.Node, target_id int64, respond_to int64)
-func SendDataToNetwork(node_id int64, msg string){
-*/
-
 func Leave_ring(node *chord.Node, mode string) {
-
-	// Leaves orderly or immediate
 
 	switch mode { 
 		case "immediate":
@@ -36,14 +18,16 @@ func Leave_ring(node *chord.Node, mode string) {
 			log.Printf("\nNode: %d is leaving orderly\n", node.ChannelId)
 
 			// Notify Successor and pRedecessor we are leaving
+			var leaving_msg = "Leaving Ring"
+			SendDataToNetwork(node.Successor, leaving_msg)
+			SendDataToNetwork(node.Predecessor, leaving_msg)
 			
 			// Loop through current nodes DataTable to append to successor
 			for k, v := range node.DataTable {
-
 				var message = msg.Message {Do:"store-data-successor", Data:{k:v}}
 				var string_msg, _ = json.Marshal(message)
 		
-				// Like this ?
+				// Send Data to Successor
 				SendDataToNetwork(node.ChannelID, string_message)
 			}
 	

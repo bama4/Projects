@@ -569,10 +569,8 @@ func net_node(channel_id int64){
 					FindRingPredecessor(&node_obj, message.TargetId, message.RespondTo)
 				} else if message.Do == "store-data-successor" {
 					// Store the data to a nodes successor data table
-					// RespondTo is Successor here
-					// Data is data to store to DataTable
-
-
+					node_obj.DataTable[message.TargetId] = message.Data
+					
 				} else if message.Do == "fix-ring-fingers"{
 					FixRingFingers(&node_obj)
 
