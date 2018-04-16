@@ -2,10 +2,10 @@ package leave_ring
 
 import "log"
 import chord "../utils/node_defs"
+import msg "../utils/message_defs"
+import "encoding/json"
 
 func Leave_ring(node *chord.Node, mode string) {
-
-	// Leaves orderly or immediate
 
 	switch mode { 
 		case "immediate":
@@ -16,10 +16,20 @@ func Leave_ring(node *chord.Node, mode string) {
 			
 		case "orderly":
 			log.Printf("\nNode: %d is leaving orderly\n", node.ChannelId)
-			// stuff to tell other nodes
+
+			// Notify Successor and pRedecessor we are leaving
+			var leaving_msg = "Leaving Ring"
+			SendDataToNetwork(node.Successor, leaving_msg)
+			SendDataToNetwork(node.Predecessor, leaving_msg)
 			
-			
-			// Loop through nodes fingertable to append to successor
+			// Loop through current nodes DataTable to append to successor
+			for k, v := range node.DataTable {
+				var message = msg.Message {Do:"store-data-successor", Data:{k:v}}
+				var string_msg, _ = json.Marshal(message)
+		
+				// Send Data to Successor
+				SendDataToNetwork(node.ChannelID, string_message)
+			}
 	
 			// remove node from ring
 			node.Predecessor = -1

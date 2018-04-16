@@ -636,7 +636,11 @@ func net_node(channel_id int64){
 				} else if message.Do == "find-ring-predecessor" {
 					//Tell node_obj to find the predecessor of target id and report back to respond-to
 					FindRingPredecessor(&node_obj, message.TargetId, message.RespondTo)
-				}else if message.Do == "fix-ring-fingers"{
+				} else if message.Do == "store-data-successor" {
+					// Store the data to a nodes successor data table
+					node_obj.DataTable[message.TargetId] = message.Data
+					
+				} else if message.Do == "fix-ring-fingers"{
 					FixRingFingers(&node_obj)
 
 				}else if message.Do == "stabilize-ring"{
