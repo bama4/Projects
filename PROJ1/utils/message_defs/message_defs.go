@@ -12,15 +12,15 @@ respond_to - The node (represented as a channel id) to direct the given action t
 data - The key/value pair in the ring representing a hash entry.
 */
 type Message struct {
-	Do             string `json:"do"`
-	SponsoringNode int64  `json:"sponsoring-node"`
-	Mode           string `json:"mode"`
-	RespondTo      int64 `json:"respond-to"`
-	Data           Data   `json:"data"`
-	TargetID       int64  `json:"target-id"`
+	Do string `json:"do"`
+	SponsoringNode int64 `json:"sponsoring-node"`
+	Mode string `json:"mode"`
+	RespondTo int64 `json:"respond-to"`
+	TargetId int64 `json:target-id`
+	Data Data `json:"data"`
 }
 
 type Data struct {
-	Key   string `json:"string"`
-	Value string `json:"string"`
+	Key string `json:"key"`
+	Value string `json:"value"`
 }
