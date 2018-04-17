@@ -5,7 +5,6 @@ import "os"
 import "strconv"
 import node "./utils/node_defs"
 import msg "./utils/message_defs"
-import leave "./leave_ring"
 import init_ring_fingers "./init_ring_fingers"
 import "math/rand"
 import "sync"
@@ -209,7 +208,7 @@ Creates nodes with random identifiers and adds them to the network map.
 func init_topology(){
 	
 
-	for i:=0; i < number_of_network_nodes; i++ {
+	for i:=1; i < number_of_network_nodes+1; i++ {
 		id := generate_channel_id()
 		//add node to network
 		map_lock.Lock()
@@ -412,30 +411,67 @@ func Stabilize(node_obj *node.Node){
 
 }
 
+
 /*
-This is the implementation of init-ring-fingers
-{do: init-ring-fingers, respond-to: sucessor}
-
-func InitRingFingers(node_obj *node.Node, respond_to int64) {
-	limit := int(math.Log2(float64(node_obj.Sucessor - node_obj.ChannelId)) + 1
-	log.Printf()
-
-}*/
-
-func Put(data *msg.Data, respond_to int64, node_obj *node.Node) {
-
-	// FindPReceedingNode
-	var closest_node = FindClosestPreceedingNode(&node_obj.FingerTable, data.Key)
-
-	// Get ID from bucket
-	var closest_id = ExtractIdFromBucketData(data.Key)
-
-	// Get data from bucket
-	var closest_data = GetDataFromBucket(closest_id)
-
-	// Put data in node
-	closest_node.DataTable[data.Key] := closest_data
+Gets the data...The node_obj is the node that will start the lookup for the data
+The data that is obtained will be sent through the bucket
+*/
+func GetData(node_obj *node.Node, respond_to int64, key string){
+	log.Printf("\nGetting data with key %s by asking Node %d\n", key, node_obj.ChannelId)
+	key_id := map_string_to_id(key)
+	log.Printf("\nKey: %s mapped to hash of %d\n", key, key_id)
+	FindClosestPreceedingNode(node_obj, key_id)
+	bucket_data := GetDataFromBucket(node_obj.ChannelId)
+	closest := ExtractIdFromBucketData(bucket_data)
+	log.Printf("\nGET: Found %d as the closest to %d\n", closest, key_id)
+	if closest > key_id {
+		//Then just say we are at the right node to store
+		log.Printf("\nStored Data\n")
+		
+	}
+	return
 }
+
+/*
+Removes the data...The node_obj is the node that will start the lookup for the data
+The data that is obtained will be sent through the bucket
+*/
+func RemoveData(node_obj *node.Node, respond_to int64, key string){
+	log.Printf("\nGetting data with key %s by asking Node %d\n", key, node_obj.ChannelId)
+	key_id := map_string_to_id(key)
+	log.Printf("\nKey: %s mapped to hash of %d\n", key, key_id)
+	FindClosestPreceedingNode(node_obj, key_id)
+	bucket_data := GetDataFromBucket(node_obj.ChannelId)
+	closest := ExtractIdFromBucketData(bucket_data)
+	log.Printf("\nREMOVE: Found %d as the closest to %d\n", closest, key_id)
+	if closest > key_id {
+		//Then just say we are at the right node to store
+		log.Printf("\nStored Data\n")
+		
+	}
+	return
+}
+
+
+func PutData(node_obj *node.Node, data msg.Data, respond_to int64) {
+
+	log.Printf("\nPutting data with key %s by asking Node %d\n", data.Key, node_obj.ChannelId)
+	key_id := map_string_to_id(data.Key)
+	log.Printf("\nKey: %s mapped to hash of %d\n", data.Key, key_id)
+	FindClosestPreceedingNode(node_obj, key_id)
+	bucket_data := GetDataFromBucket(node_obj.ChannelId)
+	closest := ExtractIdFromBucketData(bucket_data)
+	log.Printf("\nPUT: Found %d as the closest to %d\n", closest, key_id)
+	if closest > key_id {
+		//Then just say we are at the right node to store
+		log.Printf("\nStored Data\n")
+		
+	}
+	return
+}
+
+
+
 
 /*
 / ask node n to find the successor of id
@@ -565,6 +601,74 @@ func FixRingFingers(node_obj *node.Node){
 
 
 /*
+The given node leaves the ring.
+The node notifies its successor that node.Predecessor may be its successor.
+The node also tells its predecessor to set its successor to the nodes successor
+*/
+func Leave_ring(node *node.Node, mode string) {
+
+	// Leaves orderly or immediate
+	switch mode { 
+		case "immediate":
+			node.Predecessor = -1
+			node.Successor = node.ChannelId
+			//Clear finger table
+			for k,_ := range node.FingerTable {
+
+				node.FingerTable[k] = -1
+			}
+
+			log.Printf("\nNode: %d is leaving immediately\n", node.ChannelId)
+			
+		case "orderly":
+			log.Printf("\nNode: %d is leaving orderly\n", node.ChannelId)
+			// stuff to tell other nodes
+			//Let successor know that the node is leaving
+			//and to suggest node.Predecessor as new Predecessor
+			var message = msg.Message {Do:"ring-notify", RespondTo: node.Predecessor}
+
+			 string_message, err := json.Marshal(message)
+			 check_error(err)
+			 SendDataToNetwork(node.Successor, string(string_message))
+
+			//Tell predecessor to update successor
+			 message = msg.Message {Do:"set-successor", TargetId: node.Successor}
+
+			 string_message, err = json.Marshal(message)
+			 check_error(err)
+			 SendDataToNetwork(node.Successor, string(string_message))
+
+			 message = msg.Message {Do:"fix-fingers"}
+
+			 string_message, err = json.Marshal(message)
+			 check_error(err)
+			 SendDataToNetwork(node.Predecessor, string(string_message))
+			// Loop through nodes fingertable to append to successor
+	
+			// remove node from ring
+			//node.Predecessor = -1
+			//node.Successor = -1
+			
+			for k,_ := range node.FingerTable {
+
+				node.FingerTable[k] = -1
+			}
+
+		default:
+			// Immediate leave
+			node.Predecessor = -1
+			node.Successor = node.ChannelId
+			//Clear finger table
+			for k,_ := range node.FingerTable {
+
+				node.FingerTable[k] = -1
+			}
+			log.Printf("\nNode: %d is leaving immediately\n", node.ChannelId)
+	}
+
+}
+
+/*
 This function removes data from the chord ring.
 */
 /*
@@ -643,7 +747,7 @@ func net_node(channel_id int64){
 			   	} else if message.Do == "leave-ring" {
 					if val, ok := ring_nodes.Load(channel_id); ok{
 						_ = val
-						leave.Leave_ring(&node_obj, message.Mode)
+						Leave_ring(&node_obj, message.Mode)
 						ring_nodes.Delete(channel_id)
 					}else{
 						log.Printf("\nNode %d is not in the ring; cannot leave-ring\n", channel_id)
@@ -671,6 +775,15 @@ func net_node(channel_id int64){
 				}else if message.Do == "init-ring-fingers"{
 					//InitRingFingers(&node_obj, message.RespondTo)
 					
+				}else if message.Do == "get" {
+					GetData(&node_obj, node_obj.ChannelId, message.Data.Key)
+
+				}else if message.Do == "remove" {
+					RemoveData(&node_obj, node_obj.ChannelId, message.Data.Key)
+
+				}else if message.Do == "put" {
+					PutData(&node_obj, message.Data, node_obj.ChannelId)
+
 				}else if message.Do == "stabilize-ring"{
 					Stabilize(&node_obj)			
 
@@ -834,11 +947,12 @@ func coordinator(prog_args []string){
 			//format join ring instruction with random sponsoring node
 			if message.Do == "join-ring" {
 				random_ring_id = -1
-				for random_ring_id == prev_random_ring_id || random_ring_id == -1 {
+				for random_ring_id == -1 {
 					random_ring_id = get_random_ring_node()
 				}
 				message.SponsoringNode = random_ring_id
 				prev_random_ring_id = random_ring_id
+				_ = prev_random_ring_id
 				channel_id = random_network_id
 
 			}else if message.Do == "fix-ring-fingers" {
