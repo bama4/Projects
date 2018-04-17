@@ -426,6 +426,7 @@ func GetData(node_obj *node.Node, respond_to int64, key string){
 	log.Printf("\nGET: Found %d as the closest to %d\n", closest, key_id)
 	if closest > key_id {
 		//Then just say we are at the right node to store
+		log.Printf("\nStored Data\n")
 		
 	}
 	return
