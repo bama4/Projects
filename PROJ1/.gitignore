@@ -1,6 +1,6 @@
+test.go
 .gitignore
 *.old
 *.OLD
 *.bak
 *.BAK
-test.go
