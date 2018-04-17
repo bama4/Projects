@@ -331,8 +331,9 @@ func Leave_ring(leave_node *node.Node, mode string) {
                         for k, v := range leave_node.DataTable {
 
 								// Somehow fix Data
+								var temp_data Data = {Key: k, Value: v}
 
-                                var message msg.Message = {Do:"store-data-successor", Data:{k:v} }
+                                var message msg.Message = {Do:"store-data-successor", Data: temp_data}
                                 string_msg, _ := json.Marshal(message)
 
                                 // Send Data to Successor
@@ -346,7 +347,7 @@ func Leave_ring(leave_node *node.Node, mode string) {
 
                 default:
                         // Immediate leave
-                       leave_node.Predecessor = -1
+                        leave_node.Predecessor = -1
                         leave_node.Successor = -1
                         leave_node.FingerTable = nil
                         log.Printf("\nNode: %d is leaving immediately\n", node.ChannelId)
@@ -637,7 +638,7 @@ func net_node(channel_id int64){
 
 				} else if message.Do == "set-predecessor" {
 					// Set the predecessor to the target ID
-					node.obj.Predecessor = message.TargetId
+					node_obj.Predecessor = message.TargetId
 				}
 
 				/*else if message.Do == "put" {
