@@ -208,7 +208,7 @@ Creates nodes with random identifiers and adds them to the network map.
 func init_topology(){
 	
 
-	for i:=0; i < number_of_network_nodes; i++ {
+	for i:=1; i < number_of_network_nodes+1; i++ {
 		id := generate_channel_id()
 		//add node to network
 		map_lock.Lock()
@@ -547,6 +547,63 @@ func FixRingFingers(node_obj *node.Node){
 	print_node(node_obj)
 }
 
+/*
+
+*/
+func Leave_ring(node *node.Node, mode string) {
+
+	// Leaves orderly or immediate
+	switch mode { 
+		case "immediate":
+			node.Predecessor = -1
+			node.Successor = node.ChannelId
+			//Clear finger table
+			for k,_ := range node.FingerTable {
+
+				node.FingerTable[k] = -1
+			}
+
+			log.Printf("\nNode: %d is leaving immediately\n", node.ChannelId)
+			
+		case "orderly":
+			log.Printf("\nNode: %d is leaving orderly\n", node.ChannelId)
+			// stuff to tell other nodes
+			//Let successor know that the node is leaving
+			//and to suggest node.Predecessor as new Predecessor
+			var message = msg.Message {Do:"ring-notify", RespondTo: node.Predecessor}
+
+			 string_message, err := json.Marshal(message)
+			 check_error(err)
+			 SendDataToNetwork(node.Successor, string(string_message))
+			 message = msg.Message {Do:"set-successor", TargetId: node.Successor}
+
+			 string_message, err = json.Marshal(message)
+			 check_error(err)
+			 SendDataToNetwork(node.Successor, string(string_message))
+			// Loop through nodes fingertable to append to successor
+	
+			// remove node from ring
+			//node.Predecessor = -1
+			//node.Successor = -1
+			
+			for k,_ := range node.FingerTable {
+
+				node.FingerTable[k] = -1
+			}
+
+		default:
+			// Immediate leave
+			node.Predecessor = -1
+			node.Successor = node.ChannelId
+			//Clear finger table
+			for k,_ := range node.FingerTable {
+
+				node.FingerTable[k] = -1
+			}
+			log.Printf("\nNode: %d is leaving immediately\n", node.ChannelId)
+	}
+
+}
 
 func Leave_ring(node *node.Node, mode string) {
 
