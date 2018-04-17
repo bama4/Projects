@@ -5,7 +5,7 @@ import "os"
 import "strconv"
 import node "./utils/node_defs"
 import msg "./utils/message_defs"
-import leave "./leave_ring"
+//import leave "./leave_ring"
 import init_ring_fingers "./init_ring_fingers"
 import "math/rand"
 import "sync"
@@ -302,6 +302,58 @@ func ReadNodeFingerTable(node_obj *node.Node, idx int64)(result int64){
  waits to get back the message representing the successor node
 */
 
+func Leave_ring(leave_node *node.Node, mode string) {
+
+        switch mode {
+                case "immediate":
+                        leave_node.Predecessor = -1
+                        leave_node.Successor = -1
+                        leave_node.FingerTable = nil
+                        log.Printf("\nNode: %d is leaving immediately\n", leave_node.ChannelId)
+
+                case "orderly":
+                        log.Printf("\nNode: %d is leaving orderly\n", leave_node.ChannelId)
+
+                        // Notify Successor and pRedecessor we are leaving
+                        var leaving_msg = msg.Message {Do:"leaving", TargetId:leave_node.ChannelId}
+                        //var leave_succ = msg.Message {Do:"set-successor", TargetId:leave_node.ChannelID }
+                        var leave_pred = msg.Message {Do:"set-predecessor", TargetId:leave_node.Successor }
+
+						var json_leave, _ = json.Marshal(leaving_msg)
+						var json_pred, _ = json.Marshal(leave_pred)
+
+                        SendDataToNetwork(leave_node.Successor, string(json_leave))
+                        SendDataToNetwork(leave_node.Predecessor, string(json_leave))
+                        //SendDataToNetwork(leave_node.Predecessor, leave_succ)
+                        SendDataToNetwork(leave_node.Successor, string(json_pred))
+
+                        // Loop through current nodes DataTable to append to successor
+                        for k, v := range leave_node.DataTable {
+
+								// Somehow fix Data
+
+                                var message msg.Message = {Do:"store-data-successor", Data:{k:v} }
+                                string_msg, _ := json.Marshal(message)
+
+                                // Send Data to Successor
+                                SendDataToNetwork(leave_node.ChannelId, string_message)
+                        }
+
+                        // remove node from ring
+                        leave_node.Predecessor = -1
+                        leave_node.Successor = -1
+                        leave_node.FingerTable = nil
+
+                default:
+                        // Immediate leave
+                       leave_node.Predecessor = -1
+                        leave_node.Successor = -1
+                        leave_node.FingerTable = nil
+                        log.Printf("\nNode: %d is leaving immediately\n", node.ChannelId)
+        }
+
+}
+
 func Join_ring(sponsoring_node_id int64, node_obj *node.Node){
 	
     node_obj.Predecessor = -1
@@ -544,7 +596,7 @@ func net_node(channel_id int64){
 			   	} else if message.Do == "leave-ring" {
 					if val, ok := ring_nodes.Load(channel_id); ok{
 						_ = val
-						leave.Leave_ring(&node_obj, message.Mode)
+						Leave_ring(&node_obj, message.Mode)
 						ring_nodes.Delete(channel_id)
 					}else{
 						log.Printf("\nNode %d is not in the ring; cannot leave-ring\n", channel_id)
@@ -569,7 +621,7 @@ func net_node(channel_id int64){
 					FindRingPredecessor(&node_obj, message.TargetId, message.RespondTo)
 				} else if message.Do == "store-data-successor" {
 					// Store the data to a nodes successor data table
-					node_obj.DataTable[message.TargetId] = message.Data
+					node_obj.DataTable[string(message.TargetId)] = string(message.Data)
 					
 				} else if message.Do == "fix-ring-fingers"{
 					FixRingFingers(&node_obj)
@@ -582,8 +634,9 @@ func net_node(channel_id int64){
 				}else if message.Do == "set-successor" {
 					//Set the successor as the target id
 					node_obj.Successor = message.TargetId
-				} else if message.Do == "set-predecessor" {
 
+				} else if message.Do == "set-predecessor" {
+					// Set the predecessor to the target ID
 					node.obj.Predecessor = message.TargetId
 				}
 
