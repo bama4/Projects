@@ -7,6 +7,9 @@
 {"do":"join-ring"}
 {"do":"join-ring"}
 {"do":"join-ring"}
+{"do":"leave-ring"}
+{"do":"leave-ring", "mode":"immediate"}
 {"do":"join-ring"}
-
+{"do":"join-ring"}
+{"do":"join-ring"}
 
