@@ -331,13 +331,17 @@ func Leave_ring(leave_node *node.Node, mode string) {
                         for k, v := range leave_node.DataTable {
 
 								// Somehow fix Data
-								var temp_data Data = {Key: k, Value: v}
+								var temp_data msg.Data 
+								temp_data.Key = k
+								temp_data.Value = v
 
-                                var message msg.Message = {Do:"store-data-successor", Data: temp_data}
+                                var message msg.Message
+								message.Do = "store-data-successor"
+								message.Data = temp_data
                                 string_msg, _ := json.Marshal(message)
 
                                 // Send Data to Successor
-                                SendDataToNetwork(leave_node.ChannelId, string_message)
+                                SendDataToNetwork(leave_node.ChannelId, string(string_msg))
                         }
 
                         // remove node from ring
@@ -350,7 +354,7 @@ func Leave_ring(leave_node *node.Node, mode string) {
                         leave_node.Predecessor = -1
                         leave_node.Successor = -1
                         leave_node.FingerTable = nil
-                        log.Printf("\nNode: %d is leaving immediately\n", node.ChannelId)
+                        log.Printf("\nNode: %d is leaving immediately\n", leave_node.ChannelId)
         }
 
 }
@@ -620,9 +624,10 @@ func net_node(channel_id int64){
 				} else if message.Do == "find-ring-predecessor" {
 					//Tell node_obj to find the predecessor of target id and report back to respond-to
 					FindRingPredecessor(&node_obj, message.TargetId, message.RespondTo)
+
 				} else if message.Do == "store-data-successor" {
 					// Store the data to a nodes successor data table
-					node_obj.DataTable[string(message.TargetId)] = string(message.Data)
+					node_obj.DataTable[string(message.Data.Key)] = string(message.Data.Value)
 					
 				} else if message.Do == "fix-ring-fingers"{
 					FixRingFingers(&node_obj)
