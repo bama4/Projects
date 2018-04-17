@@ -30,5 +30,4 @@ func Put(data *msg.Data, respond_to int64, node_obj *node.Node) {
 
 		// Put data in node
 		closest_node.DataTable[data.Key] := closest_data
-	}
 }

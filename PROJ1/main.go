@@ -422,6 +422,21 @@ func InitRingFingers(node_obj *node.Node, respond_to int64) {
 
 }*/
 
+func Put(data *msg.Data, respond_to int64, node_obj *node.Node) {
+
+	// FindPReceedingNode
+	var closest_node = FindClosestPreceedingNode(&node_obj.FingerTable, data.Key)
+
+	// Get ID from bucket
+	var closest_id = ExtractIdFromBucketData(data.Key)
+
+	// Get data from bucket
+	var closest_data = GetDataFromBucket(closest_id)
+
+	// Put data in node
+	closest_node.DataTable[data.Key] := closest_data
+}
+
 /*
 / ask node n to find the successor of id
 n.find successor(id)
