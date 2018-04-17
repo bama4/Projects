@@ -20,7 +20,7 @@ func Put(data *msg.Data, respond_to int64, node_obj *node.Node) {
 		DataTable[data.Key] := data.Value
 	} else {
 		// FindPReceedingNode
-		var closest_node = FindClosestPreceedingNode(&FingerTable, data.Key)
+		var closest_node = FindClosestPreceedingNode(&node_obj.FingerTable, data.Key)
 
 		// Put data in node
 		closest_node.DataTable[data.Key] := data.Value
