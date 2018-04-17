@@ -10,19 +10,25 @@ import node "./utils/node_defs"
 
 // func FindClosestPreceedingNode(node_obj *node.Node, target_id int64)
 
+/*
+
+func GetDataFromBucket(node_id int64)(bucket_data string){
+func ExtractIdFromBucketData(data string)(identifier int64){
+
+*/
+
 func Put(data *msg.Data, respond_to int64, node_obj *node.Node) {
 
-	// Get the node ID for data string
-	var node_id = map_to_string_id(data.Key)
-
-	// Check to see if this is the right node to store data
-	if ChannelId == node_id {
-		DataTable[data.Key] := data.Value
-	} else {
 		// FindPReceedingNode
 		var closest_node = FindClosestPreceedingNode(&node_obj.FingerTable, data.Key)
 
+		// Get ID from bucket
+		var closest_id = ExtractIdFromBucketData(data.Key)
+
+		// Get data from bucket
+		var closest_data = GetDataFromBucket(closest_id)
+
 		// Put data in node
-		closest_node.DataTable[data.Key] := data.Value
+		closest_node.DataTable[data.Key] := closest_data
 	}
 }
