@@ -547,8 +547,11 @@ func FixRingFingers(node_obj *node.Node){
 	print_node(node_obj)
 }
 
-/*
 
+/*
+The given node leaves the ring.
+The node notifies its successor that node.Predecessor may be its successor.
+The node also tells its predecessor to set its successor to the nodes successor
 */
 func Leave_ring(node *node.Node, mode string) {
 
@@ -575,66 +578,19 @@ func Leave_ring(node *node.Node, mode string) {
 			 string_message, err := json.Marshal(message)
 			 check_error(err)
 			 SendDataToNetwork(node.Successor, string(string_message))
+
+			//Tell predecessor to update successor
 			 message = msg.Message {Do:"set-successor", TargetId: node.Successor}
 
 			 string_message, err = json.Marshal(message)
 			 check_error(err)
 			 SendDataToNetwork(node.Successor, string(string_message))
-			// Loop through nodes fingertable to append to successor
-	
-			// remove node from ring
-			//node.Predecessor = -1
-			//node.Successor = -1
-			
-			for k,_ := range node.FingerTable {
 
-				node.FingerTable[k] = -1
-			}
-
-		default:
-			// Immediate leave
-			node.Predecessor = -1
-			node.Successor = node.ChannelId
-			//Clear finger table
-			for k,_ := range node.FingerTable {
-
-				node.FingerTable[k] = -1
-			}
-			log.Printf("\nNode: %d is leaving immediately\n", node.ChannelId)
-	}
-
-}
-
-func Leave_ring(node *node.Node, mode string) {
-
-	// Leaves orderly or immediate
-	switch mode { 
-		case "immediate":
-			node.Predecessor = -1
-			node.Successor = node.ChannelId
-			//Clear finger table
-			for k,_ := range node.FingerTable {
-
-				node.FingerTable[k] = -1
-			}
-
-			log.Printf("\nNode: %d is leaving immediately\n", node.ChannelId)
-			
-		case "orderly":
-			log.Printf("\nNode: %d is leaving orderly\n", node.ChannelId)
-			// stuff to tell other nodes
-			//Let successor know that the node is leaving
-			//and to suggest node.Predecessor as new Predecessor
-			var message = msg.Message {Do:"ring-notify", RespondTo: node.Predecessor}
-
-			 string_message, err := json.Marshal(message)
-			 check_error(err)
-			 SendDataToNetwork(node.Successor, string(string_message))
-			 message = msg.Message {Do:"set-successor", TargetId: node.Successor}
+			 message = msg.Message {Do:"fix-fingers"}
 
 			 string_message, err = json.Marshal(message)
 			 check_error(err)
-			 SendDataToNetwork(node.Successor, string(string_message))
+			 SendDataToNetwork(node.Predecessor, string(string_message))
 			// Loop through nodes fingertable to append to successor
 	
 			// remove node from ring
@@ -930,11 +886,12 @@ func coordinator(prog_args []string){
 			//format join ring instruction with random sponsoring node
 			if message.Do == "join-ring" {
 				random_ring_id = -1
-				for random_ring_id == prev_random_ring_id || random_ring_id == -1 {
+				for random_ring_id == -1 {
 					random_ring_id = get_random_ring_node()
 				}
 				message.SponsoringNode = random_ring_id
 				prev_random_ring_id = random_ring_id
+				_ = prev_random_ring_id
 				channel_id = random_network_id
 
 			}else if message.Do == "fix-ring-fingers" {
