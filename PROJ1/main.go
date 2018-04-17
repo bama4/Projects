@@ -411,15 +411,26 @@ func Stabilize(node_obj *node.Node){
 
 }
 
+
 /*
-This is the implementation of init-ring-fingers
-{do: init-ring-fingers, respond-to: sucessor}
+Gets the data...The node_obj is the node that will start the lookup for the data
+The data that is obtained will be sent through the bucket
+*/
+func GetData(node_obj *node.Node, respond_to int64, key string){
+	log.Printf("\nGetting data with key %s by asking Node %d\n", key, node_obj.ChannelId)
+	key_id := map_string_to_id(key)
+	log.Printf("\nKey: %s mapped to hash of %d\n", key, key_id)
+	FindClosestPreceedingNode(node_obj, key_id)
+	bucket_data := GetDataFromBucket(node_obj.ChannelId)
+	closest := ExtractIdFromBucketData(bucket_data)
+	log.Printf("\nGET: Found %d as the closest to %d\n", closest, key_id)
+	if closest > key_id {
+		//Then just say we are at the right node to store
+		
+	}
+	return
+}
 
-func InitRingFingers(node_obj *node.Node, respond_to int64) {
-	limit := int(math.Log2(float64(node_obj.Sucessor - node_obj.ChannelId)) + 1
-	log.Printf()
-
-}*/
 
 /*
 / ask node n to find the successor of id
@@ -723,6 +734,9 @@ func net_node(channel_id int64){
 				}else if message.Do == "init-ring-fingers"{
 					//InitRingFingers(&node_obj, message.RespondTo)
 					
+				}else if message.Do == "get" {
+					GetData(&node_obj, node_obj.ChannelId, message.Data.Key)
+
 				}else if message.Do == "stabilize-ring"{
 					Stabilize(&node_obj)			
 

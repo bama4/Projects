@@ -2,8 +2,11 @@
 {"do":"join-ring"}
 {"do":"join-ring"}
 {"do":"join-ring"}
+{"do": "get", "data": { "key" : "a key" }, "respond-to": ""}
+{"do": "get", "data": { "key" : "a key" }, "respond-to": ""}
 {"do":"join-ring"}
 {"do":"join-ring"}
+{"do": "get", "data": { "key" : "a key" }, "respond-to": ""}
 {"do":"join-ring"}
 {"do":"join-ring"}
 {"do":"leave-ring", "mode":"orderly"}
@@ -14,6 +17,7 @@
 "do":"leave-ring", "mode":"immediately"}
 {"do":"join-ring"}
 {"do":"join-ring"}
+{"do": "get", "data": { "key" : "a key" }, "respond-to": ""}
 {"do":"join-ring"}
 {"do":"join-ring"}
 {"do":"join-ring"}
