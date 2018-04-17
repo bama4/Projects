@@ -25,3 +25,7 @@ type Data struct {
 	Key string `json:"key"`
 	Value string `json:"value"`
 }
+
+type BucketMessage struct {
+	Identifier int64 `json:"identifier"`
+}
