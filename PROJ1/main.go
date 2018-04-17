@@ -425,7 +425,7 @@ func InitRingFingers(node_obj *node.Node, respond_to int64) {
 func Put(data *msg.Data, respond_to int64, node_obj *node.Node) {
 
 	// FindPReceedingNode
-	var closest_node = FindClosestPreceedingNode(&node_obj.FingerTable, data.Key)
+	var closest_node = FindClosestPreceedingNode(node_obj, respond_to)
 
 	// Get ID from bucket
 	var closest_id = ExtractIdFromBucketData(data.Key)
@@ -434,7 +434,7 @@ func Put(data *msg.Data, respond_to int64, node_obj *node.Node) {
 	var closest_data = GetDataFromBucket(closest_id)
 
 	// Put data in node
-	closest_node.DataTable[data.Key] := closest_data
+	closest_node.DataTable[closest_data] = closest_data
 }
 
 /*
@@ -704,8 +704,7 @@ func net_node(channel_id int64){
 							SendDataToNetwork(random_ring_node, "{\"do\": \"stabilize-ring\"}")
 						}
 					}
-				}
-				/*else if message.Do == "put" {
+				} else if message.Do == "put" {
 					respond_to_node_id = struct_message.RespondTo
 					data  = struct_message.Data
 					Put(data, respond_to_node_id, node_obj)
@@ -713,13 +712,11 @@ func net_node(channel_id int64){
 					respond_to_node_id = struct_message.RespondTo
 					data  = struct_message.Data
 					Get(data, respond_to_node_id, node_obj)
-
 				}else if message.Do == "remove"{
 					respond_to_node_id = struct_message.RespondTo
 					data  = struct_message.Data
 					Remove(data, respond_to_node_id, node_obj)
 				}
-				*/
 				print_ring_nodes()
 
 			default:
