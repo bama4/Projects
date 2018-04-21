@@ -453,7 +453,6 @@ func RemoveData(node_obj *node.Node, respond_to int64, key string){
 	return
 }
 
-
 func PutData(node_obj *node.Node, data msg.Data, respond_to int64) {
 
 	log.Printf("\nPutting data with key %s by asking Node %d\n", data.Key, node_obj.ChannelId)
