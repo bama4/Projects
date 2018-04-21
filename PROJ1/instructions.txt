@@ -2,30 +2,11 @@
 {"do":"join-ring"}
 {"do":"join-ring"}
 {"do":"join-ring"}
-{"do": "get", "data": { "key" : "a key" }, "respond-to": ""}
-{"do": "put", "data": { "key" : "fff" , "value": "DFDF"}, "respond-to": ""}
-{"do": "remove", "data": { "key" : "a key" }, "respond-to": ""}
-{"do":"join-ring"}
-{"do":"join-ring"}
-{"do": "get", "data": { "key" : "fff" }, "respond-to": ""}
-{"do":"join-ring"}
-{"do":"join-ring"}
-{"do": "get", "data": { "key" : "a key" }, "respond-to": ""
-{"do":"leave-ring", "mode":"orderly"}
-{"do":"join-ring"}
-{"do":"join-ring"}
-{"do":"join-ring"}
-"do": "put", "data": { "key" : "fff" , "value": "DFDF"}, "respond-to": ""}
-{"do":"join-ring"}
-"do":"leave-ring", "mode":"immediately"}
-{"do":"join-ring"}
-{"do":"join-ring"}
-{"do": "get", "data": { "key" : "a key" }, "respond-to": ""}
 {"do":"join-ring"}
 {"do":"join-ring"}
 {"do":"join-ring"}
 {"do":"join-ring"}
-{"do":"leave-ring"}
-{"do":"leave-ring", "mode":"immediate"}
+{"do":"join-ring"}
+{"do":"join-ring"}
 {"do":"join-ring"}
 {"do":"join-ring"}
