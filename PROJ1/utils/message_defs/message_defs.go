@@ -26,6 +26,10 @@ type Data struct {
 	Value string `json:"value"`
 }
 
+/*
+The tag is a field that nodes use to ensure that the order
+of the messages are correct
+*/
 type BucketMessage struct {
 	Identifier int64 `json:"identifier"`
 }
