@@ -465,7 +465,7 @@ func PutData(node_obj *node.Node, data msg.Data, respond_to int64) {
     if closest > key_id {
         //Then just say we are at the right node to store
         log.Printf("\nStored Data\n")
-        
+		node_obj.DataTable[data.Key] = data.Value	
     }
     return
 }
