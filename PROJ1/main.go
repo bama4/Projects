@@ -490,9 +490,8 @@ func Between(target_id int64, first int64, second int64)(result bool){
 	
 	//The ring is not in order
 	//So you can return true only if the target comes after the first or before the second
-	}else if second < first {
-		result = first < target_id || target_id < second
-		return
+	}else {
+		return first < target_id || second > target_id
 	}
 return 
 }
@@ -622,6 +621,25 @@ func FixRingFingers(node_obj *node.Node){
 	print_node(node_obj)
 }
 
+/*
+Checks to see if the predecessor node has failed
+*/
+func CheckPredecessor(node_obj *node.Node){
+	if HasNodeFailure(node_obj.Predecessor){
+		node_obj.Predecessor = -1	
+	}
+}
+
+/* Temporary placeholder for a timeout through a channel
+to detect node failure
+*/
+func HasNodeFailure(node_id int64)(bool){
+	if val, ok := ring_nodes.Load(node_id); ok{
+		_ = val
+		return false
+	}
+	return true
+}
 
 /*
 The given node leaves the ring.
@@ -759,6 +777,7 @@ func net_node(channel_id int64){
 				execute_stabilize_ring := get_random_int() % 3 == 0
 				//Perform join-ring action
 				if message.Do == "join-ring" {
+					
 					if val, ok := ring_nodes.Load(channel_id); ok != true {
 						_ = val
 						sponsoring_node_id := message.SponsoringNode
@@ -775,6 +794,7 @@ func net_node(channel_id int64){
 					}else{
 						log.Printf("\nNode %d is not in the ring; cannot leave-ring\n", channel_id)
 					}
+				//tells the node_obj that the respond to may be its predecessor
 				} else if message.Do == "ring-notify" {
 					Notify(&node_obj, message.RespondTo)
 
@@ -785,8 +805,9 @@ func net_node(channel_id int64){
 						FindRingSuccessor(sponsor_node, message.TargetId, message.RespondTo)
 					}else{
 						log.Printf("\nRespondTo node: %d is not responding...not in ring?\n", message.RespondTo)
-
 					}
+
+					
 				} else if message.Do == "find-ring-predecessor" {
 					//Tell node_obj to find the predecessor of target id and report back to respond-to
 					FindRingPredecessor(&node_obj, message.TargetId, message.RespondTo)
@@ -828,6 +849,8 @@ func net_node(channel_id int64){
 					string_message, err := json.Marshal(bucket_msg)
 					check_error(err)
 					SendDataToBucket(message.RespondTo, string(string_message))
+				}else if message.Do == "check-predecessor"{
+					CheckPredecessor(&node_obj)
 				}
 
 				//Randomly cause a to fix fingers/execute stabilize
@@ -838,6 +861,7 @@ func net_node(channel_id int64){
 					}else{
 
 						if execute_stabilize_ring == true {
+							//SendDataToNetwork(random_ring_node, "{\"do\": \"check-predecessor\"}")
 							SendDataToNetwork(random_ring_node, "{\"do\": \"stabilize-ring\"}")
 						}
 					}
