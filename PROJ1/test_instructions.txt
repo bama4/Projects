@@ -1,0 +1,3 @@
+{"do":"join-ring", "sponsoring-node": 2, "test-send-to": 1}
+{"do":"stabilize-ring", "test-send-to": 1}
+{"do":"stabilize-ring", "test-send-to": 2}

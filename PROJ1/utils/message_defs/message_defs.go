@@ -11,6 +11,7 @@ sponsoring_node - The sponsoring node already in the coord ring for the action.
 mode - The mode for leaving the CHORD ring
 respond_to - The node (represented as a channel id) to direct the given action towards
 data - The key/value pair in the ring representing a hash entry.
+test-send-to - This field is only used for testing
 */
 type Message struct {
 	Do string `json:"do"`
@@ -19,6 +20,7 @@ type Message struct {
 	RespondTo int64 `json:"respond-to"`
 	TargetId int64 `json:target-id`
 	Data Data `json:"data"`
+	TestSendTo int64 `json:"test-send-to"`
 }
 
 type Data struct {
