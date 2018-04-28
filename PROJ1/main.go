@@ -15,10 +15,12 @@ import "encoding/json"
 import "math"
 import responsetime "./utils/responsetime"
 
+
 /*This is defining a concurent thread safe map
 The ring_nodes map is NOT the chord ring
 The ring nodes just allows the coordinator to know
 how many nodes are in the ring for randomization purposes.
+
 
 The ring nodes store node objects for each node id for debugging 
 purposes
@@ -102,8 +104,22 @@ var map_lock = sync.Mutex{}
 /*
 This is the number of nodes in the ring
 */
-var number_of_network_nodes int = 0
+var number_of_network_nodes int = 4
 
+/*
+This is the global test configuration
+*/
+var test_mode bool = false
+
+/*
+This is the first node in the ring in test mode
+*/
+var test_first_node int64 = 2
+
+/*
+This is the test channel
+*/
+var test_channel = make(chan string)
 /*
 This is the mean time for each node to wait before accepting the next message in the channel
 */
@@ -183,6 +199,7 @@ func generate_channel_id() (rand_num int64){
 	defer map_lock.Unlock()
 	rand_num = 0
 	if len(network) == number_of_network_nodes {
+		map_lock.Lock()
 		//cant generate a unique id
 		return -1
 	}
@@ -207,27 +224,47 @@ Creates nodes with random identifiers and adds them to the network map.
 */
 func init_topology(){
 	
+	//Adds the designated first node for test to the network
+	if test_mode == true {
+		AddNodeToNetwork(test_first_node)
+		//start up node
+		wg.Add(1)
+		go net_node(test_first_node)
+		_ = <-test_channel
+		log.Println("Waiting 10 seconds in test mode for first node to be initialized")
+	}
 
-	for i:=1; i < number_of_network_nodes+1; i++ {
+	for i:=1; i <= number_of_network_nodes; i++ {
+
 		id := generate_channel_id()
+		//Return if failed to generate an id that is not already in the network
+		if id == -1{
+			log.Println("INIT_TOPOLOGY:Failed to generate any more network nodes")
+			return
+		}
+		log.Printf("\nAdding Node %d to network\n", id)
 		//add node to network
-		map_lock.Lock()
-		network[int64(id)] = make(chan string, 100)
-		map_lock.Unlock()
-		map_lock.Lock()
-		ring_nodes_bucket[int64(id)] = make(chan string, 5)
-		map_lock.Unlock()
+		AddNodeToNetwork(int64(id))
 		//start up node
 		id_64 := int64(id)
 		wg.Add(1)
 		go net_node(id_64)
-		if i == 0 {
-			//Wait a little while for the first node to be created and start the ring
-			time.Sleep(3)
-		}
 	}
 }
 
+/*
+Adds a node to the network setting up its network channel and
+bucket channel
+*/
+func AddNodeToNetwork(id int64){
+	//add node to network
+	map_lock.Lock()
+	network[int64(id)] = make(chan string, 100)
+	map_lock.Unlock()
+	map_lock.Lock()
+	ring_nodes_bucket[int64(id)] = make(chan string, 5)
+	map_lock.Unlock()
+}
 /*
 The predecessor is the id of the node that is the predecesor of the node_obj
 */
@@ -328,7 +365,8 @@ func Join_ring(sponsoring_node_id int64, node_obj *node.Node){
 	}else{
 		node_obj.Successor = node_obj.ChannelId
 	}
-	FixRingFingers(node_obj)
+	
+	//FixRingFingers(node_obj)
     log.Printf("\nJOIN_RING:SENT find successor message with sponsoring node: %d and target node: %d. Successor of target is %d\n", sponsoring_node_id, node_obj.ChannelId, successor)
     return
 }
@@ -377,6 +415,7 @@ to tell the node_obj what the node_objs.Successor's Predecessor is
 */
 func Stabilize(node_obj *node.Node){
 
+	log.Printf("\nSTABILIZE:About to stabilize Node %d\n", node_obj.ChannelId)
 	var x int64 = -1
 	//If node_objs successor is itself, we can just get the 
 	//predecessor directly
@@ -384,12 +423,14 @@ func Stabilize(node_obj *node.Node){
 	//predecessor of node_obj.Successor to see if node_obj.Successor.Predecessor
 	//Should instead be node_obj's.Sucessor
 	var message = msg.Message {Do:"get-predecessor", RespondTo: node_obj.ChannelId}
-    	string_message, err := json.Marshal(message)
-    	check_error(err)
-	SendDataToNetwork(node_obj.Successor, string(string_message))
+	string_message, err := json.Marshal(message)
 	log.Printf("\nSTABILIZE: To Stabilize Node %d, told %d to return predecessor\n", node_obj.ChannelId, node_obj.Successor)
 	//Only send a get predecessor message if the node_obj and its successor are two different nodes
 	if node_obj.ChannelId != node_obj.Successor {
+		var message = msg.Message {Do:"get-predecessor", RespondTo: node_obj.ChannelId}
+		string_message, err := json.Marshal(message)
+		check_error(err)
+		SendDataToNetwork(node_obj.Successor, string(string_message))
 		//Listen for the response containing the predecessor id
 		bucket_data := GetDataFromBucket(node_obj.ChannelId)
 		x = ExtractIdFromBucketData(bucket_data)
@@ -480,7 +521,7 @@ func Between(target_id int64, first int64, second int64)(result bool){
 	//The first and second node is in order
 	//So you can return true if the target_id is in between
 	if first < second{
-		if first < target_id && target_id < second{
+		if first <= target_id && target_id <= second{
 			result = true
 			return
 		}else{
@@ -520,7 +561,7 @@ func FindRingSuccessor(node_obj *node.Node, target_id int64, respond_to int64) i
 	//check if either target_id is in between the node and node.successor if node/node.successor is in order
 	//or if they are not in order make sure that the target_id is either greater than the node or less than the node.successor
 	if Between(target_id, node_obj.ChannelId, node_obj.Successor){
-		log.Printf("\nFIND_SUCCESSOR:FOUND a place in between for %d using find successor\n", target_id)
+		log.Printf("\nFIND_SUCCESSOR:FOUND a place in between for %d. Successor is %d\n", target_id, node_obj.Successor)
 
 		//Tell node_obj that node_obj.Successor is target-ids successor (node_obj is equilvalent to respond-to)
 		var bucket_msg =  msg.BucketMessage {Identifier: node_obj.Successor}
@@ -532,6 +573,7 @@ func FindRingSuccessor(node_obj *node.Node, target_id int64, respond_to int64) i
 	//This is the case where the target_id is not in between node and node.successor and the target_id is less 
 	//than the node but greater than the nodes successor
 	}else{
+		log.Printf("\nFIND_SUCCESSOR: Node %d is not between %d and %d\n", target_id, node_obj.ChannelId, node_obj.Successor)
 		log.Printf("\nFIND_SUCCESSOR:STILL NEED TO FIND a successor for %d and tell %d\n", target_id, respond_to)
 		// var message = msg.Message {Do:"find-closest-preceeding-node", TargetId: target_id, RespondTo: node_obj.ChannelId}
     		//string_message, err := json.Marshal(message)
@@ -737,7 +779,7 @@ func net_node(channel_id int64){
 				   DataTable:make(map[string]string)}
 
 	var wait_time = int(responsetime.GetResponseTime(mean_wait_value))
-	//Initialize table to size NF where 2^N is the number of nodes
+	//Initialize table to size N where 2^N is the number of nodes
 	init_ring_fingers.Init_Ring_FingerTable(&node_obj, int(math.Log2(float64(number_of_network_nodes))))
 	//If ring is empty just add this node to the ring
 	//This is the first node to enter the ring. Make this node's successor itself.
@@ -753,6 +795,10 @@ func net_node(channel_id int64){
 			map_lock.Unlock()
 		}
 		log.Printf("Node %d was used to create the ring.", channel_id)
+
+		if test_mode == true{
+			test_channel <- "Done"
+		}
 	}
 
 	for {
@@ -786,6 +832,11 @@ func net_node(channel_id int64){
 					}else{
 						log.Printf("\nNode %d is already in the ring; cannot join-ring\n", channel_id)
 					}
+
+					if test_mode == true {
+						test_channel <- "Done"
+					}
+
 			   	} else if message.Do == "leave-ring" {
 					if val, ok := ring_nodes.Load(channel_id); ok{
 						_ = val
@@ -793,6 +844,9 @@ func net_node(channel_id int64){
 						ring_nodes.Delete(channel_id)
 					}else{
 						log.Printf("\nNode %d is not in the ring; cannot leave-ring\n", channel_id)
+					}
+					if test_mode == true {
+						test_channel <- "Done"
 					}
 				//tells the node_obj that the respond to may be its predecessor
 				} else if message.Do == "ring-notify" {
@@ -813,7 +867,9 @@ func net_node(channel_id int64){
 					FindRingPredecessor(&node_obj, message.TargetId, message.RespondTo)
 				}else if message.Do == "fix-ring-fingers"{
 					FixRingFingers(&node_obj)
-
+					if test_mode == true {
+						test_channel <- "Done"
+					}
 				//The node that recieves this message is the node
 				//That needs to have its fingers built.
 				//the respond-to field added on is the nodes successor
@@ -822,15 +878,24 @@ func net_node(channel_id int64){
 					
 				}else if message.Do == "get" {
 					GetData(&node_obj, node_obj.ChannelId, message.Data.Key)
-
+					if test_mode == true {
+						test_channel <- "Done"
+					}
 				}else if message.Do == "remove" {
 					RemoveData(&node_obj, node_obj.ChannelId, message.Data.Key)
-
+					if test_mode == true {
+						test_channel <- "Done"
+					}
 				}else if message.Do == "put" {
 					PutData(&node_obj, message.Data, node_obj.ChannelId)
-
+					if test_mode == true {
+						test_channel <- "Done"
+					}
 				}else if message.Do == "stabilize-ring"{
-					Stabilize(&node_obj)			
+					Stabilize(&node_obj)
+					if test_mode == true {
+						test_channel <- "Done"
+					}			
 
 				}else if message.Do == "find-closest-preceeding-node" {
 					//Have node_obj find the closest preceeding node to the target_id
@@ -854,8 +919,9 @@ func net_node(channel_id int64){
 				}
 
 				//Randomly cause a to fix fingers/execute stabilize
+				//Only do this randomly in non-test mode
 				random_ring_node := get_random_ring_node()
-				if random_ring_node != -1 {
+				if random_ring_node != -1 && test_mode == false{
 					if execute_fix_fingers == true {
 						SendDataToNetwork(random_ring_node, "{\"do\": \"fix-ring-fingers\"}")
 					}else{
@@ -961,15 +1027,24 @@ The coordinator randomly generates the sponsoring node for join ring
 */
 func coordinator(prog_args []string){
 
-	var file_name = prog_args[0]
-	_ = file_name
-	var num_nodes, _ = strconv.Atoi(prog_args[1])
+	var test_m = prog_args[0]
+	var file_name = prog_args[1]
 	mean_wait, err := strconv.ParseFloat(prog_args[2], 64)
 	check_error(err)
-	mean_wait_value = mean_wait
+	var num_nodes int
 
+	//Set up test mode
+	if test_m == "YES"{
+		test_mode = true
+	}else{
+		test_mode = false
+		num_nodes, _ = strconv.Atoi(prog_args[3])
+		number_of_network_nodes = int(math.Exp2(float64(num_nodes)))
+	}
+
+	mean_wait_value = mean_wait
 	//The number of nodes is 2^N where N is what the user entered for the amount of nodes
-	number_of_network_nodes = int(math.Exp2(float64(num_nodes)))
+	log.Printf("\nStarting program with the following:\nInstruction File: %s\nNumber of network nodes: %d\nMean wait time: %f\n", file_name, number_of_network_nodes, mean_wait_value)
 	log.Println("This is the coordinator.")
 	//Create a bunch of random nodes for the network
 	init_topology()
@@ -998,19 +1073,39 @@ func coordinator(prog_args []string){
 				for random_ring_id == -1 {
 					random_ring_id = get_random_ring_node()
 				}
-				message.SponsoringNode = random_ring_id
+
+				if test_mode == false{
+					message.SponsoringNode = random_ring_id
+				}
 				prev_random_ring_id = random_ring_id
 				_ = prev_random_ring_id
-				channel_id = random_network_id
+
+				if test_mode == false{
+					channel_id = random_network_id
+				}else {
+					channel_id = message.TestSendTo
+				}
 
 			}else if message.Do == "fix-ring-fingers" {
-				channel_id = random_ring_id
+
+				//check test mode
+				if test_mode == false{
+					channel_id = random_ring_id
+				}else{
+					channel_id = message.TestSendTo
+				}
 				if channel_id < 0 {
 					log.Println("There is no node in the ring to fix fingers")
 					continue
 				}
 			}else{
-				channel_id = random_ring_id
+
+				//check test mode
+				if test_mode == false{
+					channel_id = random_ring_id
+				}else{
+					channel_id = message.TestSendTo
+				}
 
 			}
 
@@ -1018,9 +1113,14 @@ func coordinator(prog_args []string){
 			check_error(err)
 			// Give a random node instructions
 			map_lock.Lock()
+
+			//Send the instruction
 			network[channel_id] <- string(modified_inst)
 			map_lock.Unlock()
-			time.Sleep(3)
+			//if test mode, wait until instruction is done before sending another
+			if test_mode == true{
+				_ = <-test_channel
+			}
 	}
 	
 }
@@ -1036,7 +1136,10 @@ func main(){
 
 	var prog_args = os.Args[1:]
 		if len(prog_args) < 3 {
-		log.Println("USAGE: go run main.go <INSTRUCTION FILE> <N WHERE #NODES is 2^N> <AVERAGE_WEIGHT_TIME>")
+		//Test mode... the default number of nodes in the ring is 2^2 and the default first node is 2
+		//sponsoring node in the file must be filled
+		log.Println("USAGE1 Test Mode: go run main.go <TEST_MODE> <INST FILE> <AVG_WEIGHT_TIME>")
+		log.Println("USAGE2 Non-Test Mode: go run main.go <INST FILE> <TEST_MODE> <AVG_WEIGHT_TIME> <N WHERE #NODES is 2^N>")
 		os.Exit(1)
 	}
 
