@@ -231,12 +231,11 @@ func init_topology(){
 		//start up node
 		wg.Add(1)
 		go net_node(test_first_node)
+		//Wait for first node to be set up
 		_ = <-test_channel
-		log.Println("Waiting 10 seconds in test mode for first node to be initialized")
 	}
 
 	for i:=1; i <= number_of_network_nodes; i++ {
-
 		id := generate_channel_id()
 		//Return if failed to generate an id that is not already in the network
 		if id == -1{
@@ -366,8 +365,6 @@ func Join_ring(sponsoring_node_id int64, node_obj *node.Node){
 	}else{
 		node_obj.Successor = node_obj.ChannelId
 	}
-	
-	//FixRingFingers(node_obj)
     log.Printf("\nJOIN_RING:SENT find successor message with sponsoring node: %d and target node: %d. Successor of target is %d\n", sponsoring_node_id, node_obj.ChannelId, successor)
     return
 }
@@ -648,7 +645,6 @@ Refreshes the finger table.
 node_obj is the node that should refresh its table entries
 */
 func FixRingFingers(node_obj *node.Node){
-
 	var target_id int64
 	var raw_entry_id int64
 	for i :=0; i < len(node_obj.FingerTable); i++ {
@@ -1096,13 +1092,13 @@ func coordinator(prog_args []string){
 					random_ring_id = get_random_ring_node()
 				}
 
-				if test_mode == false{
+				if test_mode == false {
 					message.SponsoringNode = random_ring_id
 				}
 				prev_random_ring_id = random_ring_id
 				_ = prev_random_ring_id
 
-				if test_mode == false{
+				if test_mode == false {
 					channel_id = random_network_id
 				}else {
 					channel_id = message.TestSendTo
@@ -1111,7 +1107,7 @@ func coordinator(prog_args []string){
 			}else if message.Do == "fix-ring-fingers" {
 
 				//check test mode
-				if test_mode == false{
+				if test_mode == false {
 					channel_id = random_ring_id
 				}else{
 					channel_id = message.TestSendTo
@@ -1123,7 +1119,7 @@ func coordinator(prog_args []string){
 			}else{
 
 				//check test mode
-				if test_mode == false{
+				if test_mode == false {
 					channel_id = random_ring_id
 				}else{
 					channel_id = message.TestSendTo
@@ -1142,6 +1138,8 @@ func coordinator(prog_args []string){
 			//if test mode, wait until instruction is done before sending another
 			if test_mode == true{
 				_ = <-test_channel
+			}else{
+				time.Sleep(3)
 			}
 	}
 	
@@ -1161,7 +1159,7 @@ func main(){
 		//Test mode... the default number of nodes in the ring is 2^2 and the default first node is 2
 		//sponsoring node in the file must be filled
 		log.Println("USAGE1 Test Mode: go run main.go <TEST_MODE> <INST FILE> <AVG_WEIGHT_TIME>")
-		log.Println("USAGE2 Non-Test Mode: go run main.go <INST FILE> <TEST_MODE> <AVG_WEIGHT_TIME> <N WHERE #NODES is 2^N>")
+		log.Println("USAGE2 Non-Test Mode: go run main.go  <TEST_MODE> <INST FILE> <AVG_WEIGHT_TIME> <N WHERE #NODES is 2^N>")
 		os.Exit(1)
 	}
 
