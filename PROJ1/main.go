@@ -126,6 +126,12 @@ This is the mean time for each node to wait before accepting the next message in
 */
 var mean_wait_value float64
 
+/*
+Node Response Timeout.
+A timeout primarily used by the bucket for reading responses
+*/
+var response_timeout = 20
+
 func check_error(err error){
 	if err != nil {
 		log.Println("Error : ", err)
@@ -302,16 +308,31 @@ func ExtractIdFromBucketData(data string)(identifier int64){
 	byte_msg := []byte(data)
 	var message msg.BucketMessage
 	err := json.Unmarshal(byte_msg, &message)
-	check_error(err)
+	if err != nil {
+		log.Println("Failed to extract the following bucket data: ", data)
+		identifier = -1
+		return
+	}
 	identifier = message.Identifier
 	return
 }
 /*
 This function recieves data from the designated bucket.
 The node id given is used to read the correct bucket
+If the get data from bucket action times out, an empty string is returned
 */
 func GetDataFromBucket(node_id int64)(bucket_data string){
 	log.Printf("\nBUCKET:Node: %d's  data is waiting for data to be read ....\n", node_id)
+	select {
+		case bucket_data = <-ring_nodes_bucket[node_id]:
+			return
+
+		//timeout after response_time seconds of not recieving data
+		case <-time.After(time.Duration(response_timeout) * time.Second):
+			log.Printf("\nWARNING:Timeout when listening for response data for Node %d\n",node_id )
+			bucket_data = ""
+			return
+	}
 	bucket_data = <- ring_nodes_bucket[node_id]
 	log.Printf("\nBUCKET:Node: %d's data has finished being read ....\n", node_id)
 	return
@@ -583,6 +604,12 @@ func FindRingSuccessor(node_obj *node.Node, target_id int64, respond_to int64) i
 		FindClosestPreceedingNode(node_obj, target_id)
 		bucket_data := GetDataFromBucket(node_obj.ChannelId)
 		closest_preceeding := ExtractIdFromBucketData(bucket_data)
+
+		//Check if Id failed to get extracted
+		if closest_preceeding == -1 {
+			log.Printf("\nFIND_SUCCESSOR: Failed to find successor for %d\n", target_id)
+			SendDataToBucket(respond_to, "")
+		}
 		log.Printf("\nFIND_SUCCESSOR: Node %d Found the closest preceeding node of %d to be %d\n", node_obj.ChannelId, target_id, closest_preceeding)
 		//If we are at the closest_preceeding node, then just return that as the successor
 		if closest_preceeding == node_obj.ChannelId {
@@ -1141,8 +1168,23 @@ func coordinator(prog_args []string){
 			}else{
 				time.Sleep(3)
 			}
+
 	}
-	
+
+		//Just keep throwing random fix fingers and stabilizes after all of the instructions are
+		//Finished being read if not in test mode
+
+/*
+		if test_mode == false {
+			for true{
+				random_ring_id = get_random_ring_node()
+				time.Sleep(20)
+				SendDataToNetwork(random_ring_id, "{\"do\": \"fix-ring-fingers\"}")
+				SendDataToNetwork(random_ring_id, "{\"do\": \"stabilize-ring\"}")
+			
+			}	
+		}
+*/
 }
 
 
