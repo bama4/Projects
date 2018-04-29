@@ -484,6 +484,7 @@ func RemoveData(node_obj *node.Node, respond_to int64, key string){
     bucket_data := GetDataFromBucket(node_obj.ChannelId)
     closest := ExtractIdFromBucketData(bucket_data)
     log.Printf("\nREMOVE: Found %d as the closest to %d\n", closest, key_id)
+
     if closest > key_id {
         //Then just say we are at the right node to store
         log.Printf("\nStored Data\n")
@@ -503,11 +504,15 @@ func PutData(node_obj *node.Node, respond_to int64, key string, value string) {
 
     log.Printf("\nPUT: Found %d as the closest to %d\n", closest, key_id)
 
+	// while closest < key_id { }
     if closest > key_id {
         //Then just say we are at the right node to store
         log.Printf("\n@@@@@----- Stored Data at node %d -----@@@@@@@\n", closest)
+		//node.DataTable[key] := value
         
-    }
+    } else {
+        log.Printf("\n@@@@@----- Closest Node not found, looking again...-----@@@@@\n")
+	}
 
     return
 }
