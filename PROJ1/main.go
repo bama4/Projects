@@ -120,6 +120,7 @@ var test_first_node int64 = 2
 This is the test channel
 */
 var test_channel = make(chan string)
+
 /*
 This is the mean time for each node to wait before accepting the next message in the channel
 */
@@ -230,12 +231,11 @@ func init_topology(){
 		//start up node
 		wg.Add(1)
 		go net_node(test_first_node)
+		//Wait for first node to be set up
 		_ = <-test_channel
-		log.Println("Waiting 10 seconds in test mode for first node to be initialized")
 	}
 
 	for i:=1; i <= number_of_network_nodes; i++ {
-
 		id := generate_channel_id()
 		//Return if failed to generate an id that is not already in the network
 		if id == -1{
@@ -365,8 +365,6 @@ func Join_ring(sponsoring_node_id int64, node_obj *node.Node){
 	}else{
 		node_obj.Successor = node_obj.ChannelId
 	}
-	
-	//FixRingFingers(node_obj)
     log.Printf("\nJOIN_RING:SENT find successor message with sponsoring node: %d and target node: %d. Successor of target is %d\n", sponsoring_node_id, node_obj.ChannelId, successor)
     return
 }
@@ -517,11 +515,12 @@ A function that compares the target_id relative to the ordering of the first
 and second id
 */
 func Between(target_id int64, first int64, second int64)(result bool){
+	log.Printf("\nBETWEEN: Checking if %d is in between %d and %d\n", target_id, first,second)
 	result = true
 	//The first and second node is in order
 	//So you can return true if the target_id is in between
-	if first < second{
-		if first <= target_id && target_id <= second{
+	if first < second {
+		if first < target_id && target_id < second{
 			result = true
 			return
 		}else{
@@ -532,7 +531,8 @@ func Between(target_id int64, first int64, second int64)(result bool){
 	//The ring is not in order
 	//So you can return true only if the target comes after the first or before the second
 	}else {
-		return first < target_id || second > target_id
+		log.Printf("BEETWEEN: %d target and %d first\n", target_id, first)
+		return target_id > first || target_id < second
 	}
 return 
 }
@@ -560,7 +560,7 @@ func FindRingSuccessor(node_obj *node.Node, target_id int64, respond_to int64) i
 	log.Printf("\nFIND_SUCCESSOR:Finding the successor of %d by asking Node: %d\n", target_id, node_obj.ChannelId)
 	//check if either target_id is in between the node and node.successor if node/node.successor is in order
 	//or if they are not in order make sure that the target_id is either greater than the node or less than the node.successor
-	if Between(target_id, node_obj.ChannelId, node_obj.Successor){
+	if Between(target_id, node_obj.ChannelId, node_obj.Successor) || target_id == node_obj.Successor{
 		log.Printf("\nFIND_SUCCESSOR:FOUND a place in between for %d. Successor is %d\n", target_id, node_obj.Successor)
 
 		//Tell node_obj that node_obj.Successor is target-ids successor (node_obj is equilvalent to respond-to)
@@ -574,7 +574,7 @@ func FindRingSuccessor(node_obj *node.Node, target_id int64, respond_to int64) i
 	//than the node but greater than the nodes successor
 	}else{
 		log.Printf("\nFIND_SUCCESSOR: Node %d is not between %d and %d\n", target_id, node_obj.ChannelId, node_obj.Successor)
-		log.Printf("\nFIND_SUCCESSOR:STILL NEED TO FIND a successor for %d and tell %d\n", target_id, respond_to)
+		log.Printf("\nFIND_SUCCESSOR:STILL NEED TO FIND a successor for %d and tell %d...will look at %d's table\n", target_id, respond_to, node_obj.ChannelId)
 		// var message = msg.Message {Do:"find-closest-preceeding-node", TargetId: target_id, RespondTo: node_obj.ChannelId}
     		//string_message, err := json.Marshal(message)
     		//check_error(err)
@@ -621,7 +621,7 @@ func FindClosestPreceedingNode(node_obj *node.Node, target_id int64){
 			//If the entry is 
 			if Between(finger_entry, node_obj.ChannelId, target_id) {			
 				//Send the closest preceeding id to the respond-to node that requested it
-				closest_preceeding := ReadNodeFingerTable(node_obj, int64(i))
+				closest_preceeding := finger_entry
 				var bucket_msg =  msg.BucketMessage {Identifier: closest_preceeding}
 				string_message, err := json.Marshal(bucket_msg)
 				check_error(err)
@@ -645,22 +645,40 @@ Refreshes the finger table.
 node_obj is the node that should refresh its table entries
 */
 func FixRingFingers(node_obj *node.Node){
-
+	var target_id int64
+	var raw_entry_id int64
 	for i :=0; i < len(node_obj.FingerTable); i++ {
 		//find the successor for target id n.id + 2^i for the ith entry
-		FindRingSuccessor(node_obj, int64(node_obj.ChannelId) + int64(math.Exp2(float64(i))), node_obj.ChannelId)
-		log.Printf("\nFIX_FINGERS:Looking for %d's successor at entry %d for Node %d\n", 
-			int64(node_obj.ChannelId) + int64(math.Exp2(float64(i))), i, node_obj.ChannelId)
+		raw_entry_id = int64(node_obj.ChannelId) + int64(math.Exp2(float64(i)))
+		target_id =  ShiftMod(raw_entry_id, int64(number_of_network_nodes))
+		log.Printf("\nFIX_FINGERS:Looking for %d --> %d successor at entry %d for Node %d\n", raw_entry_id, target_id, i, node_obj.ChannelId)
+
+		//Dont send the find successor message if we are already at the successor
+		if node_obj.Successor == node_obj.ChannelId{
+			FindRingSuccessor(node_obj, target_id, node_obj.ChannelId)
+		}else{
+			log.Printf("\nSending a find-ring-successor for %d --> %d to Node %d\n", raw_entry_id, target_id, node_obj.Successor)
+			var bucket_msg =  msg.Message {Do: "find-ring-successor", TargetId: target_id, RespondTo: node_obj.ChannelId}
+				string_message, err := json.Marshal(bucket_msg)
+				check_error(err)
+				SendDataToNetwork(node_obj.Successor, string(string_message))
+		}
 		//wait to recieve the successor result from find successor
 		bucket_data := GetDataFromBucket(node_obj.ChannelId)
 		entry_successor := ExtractIdFromBucketData(bucket_data)
-		log.Printf("\nFIX_FINGERS:Recieved successor %d for entry %d\n", entry_successor, i)
+		log.Printf("\nFIX_FINGERS:Recieved successor %d for %d --> %d at entry %d of Node %d's table\n", entry_successor, raw_entry_id, target_id , i, node_obj.ChannelId)
 		map_lock.Lock()
 		node_obj.FingerTable[int64(i)] = entry_successor
 		map_lock.Unlock()
 	}
 	log.Printf("\nFIX_FINGERS:Node %d updated to the following: \n", node_obj.ChannelId)
 	print_node(node_obj)
+}
+
+func ShiftMod(num int64, fact int64) int64{
+
+	divide_result := num % fact
+	return divide_result
 }
 
 /*
@@ -1074,13 +1092,13 @@ func coordinator(prog_args []string){
 					random_ring_id = get_random_ring_node()
 				}
 
-				if test_mode == false{
+				if test_mode == false {
 					message.SponsoringNode = random_ring_id
 				}
 				prev_random_ring_id = random_ring_id
 				_ = prev_random_ring_id
 
-				if test_mode == false{
+				if test_mode == false {
 					channel_id = random_network_id
 				}else {
 					channel_id = message.TestSendTo
@@ -1089,7 +1107,7 @@ func coordinator(prog_args []string){
 			}else if message.Do == "fix-ring-fingers" {
 
 				//check test mode
-				if test_mode == false{
+				if test_mode == false {
 					channel_id = random_ring_id
 				}else{
 					channel_id = message.TestSendTo
@@ -1101,7 +1119,7 @@ func coordinator(prog_args []string){
 			}else{
 
 				//check test mode
-				if test_mode == false{
+				if test_mode == false {
 					channel_id = random_ring_id
 				}else{
 					channel_id = message.TestSendTo
@@ -1120,6 +1138,8 @@ func coordinator(prog_args []string){
 			//if test mode, wait until instruction is done before sending another
 			if test_mode == true{
 				_ = <-test_channel
+			}else{
+				time.Sleep(3)
 			}
 	}
 	
@@ -1139,7 +1159,7 @@ func main(){
 		//Test mode... the default number of nodes in the ring is 2^2 and the default first node is 2
 		//sponsoring node in the file must be filled
 		log.Println("USAGE1 Test Mode: go run main.go <TEST_MODE> <INST FILE> <AVG_WEIGHT_TIME>")
-		log.Println("USAGE2 Non-Test Mode: go run main.go <INST FILE> <TEST_MODE> <AVG_WEIGHT_TIME> <N WHERE #NODES is 2^N>")
+		log.Println("USAGE2 Non-Test Mode: go run main.go  <TEST_MODE> <INST FILE> <AVG_WEIGHT_TIME> <N WHERE #NODES is 2^N>")
 		os.Exit(1)
 	}
 
