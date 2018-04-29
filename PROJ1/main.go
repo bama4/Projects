@@ -120,6 +120,7 @@ var test_first_node int64 = 2
 This is the test channel
 */
 var test_channel = make(chan string)
+
 /*
 This is the mean time for each node to wait before accepting the next message in the channel
 */
@@ -517,11 +518,12 @@ A function that compares the target_id relative to the ordering of the first
 and second id
 */
 func Between(target_id int64, first int64, second int64)(result bool){
+	log.Printf("\nBETWEEN: Checking if %d is in between %d and %d\n", target_id, first,second)
 	result = true
 	//The first and second node is in order
 	//So you can return true if the target_id is in between
-	if first < second{
-		if first <= target_id && target_id <= second{
+	if first < second {
+		if first < target_id && target_id < second{
 			result = true
 			return
 		}else{
@@ -532,7 +534,8 @@ func Between(target_id int64, first int64, second int64)(result bool){
 	//The ring is not in order
 	//So you can return true only if the target comes after the first or before the second
 	}else {
-		return first < target_id || second > target_id
+		log.Printf("BEETWEEN: %d target and %d first\n", target_id, first)
+		return target_id > first || target_id < second
 	}
 return 
 }
@@ -560,7 +563,7 @@ func FindRingSuccessor(node_obj *node.Node, target_id int64, respond_to int64) i
 	log.Printf("\nFIND_SUCCESSOR:Finding the successor of %d by asking Node: %d\n", target_id, node_obj.ChannelId)
 	//check if either target_id is in between the node and node.successor if node/node.successor is in order
 	//or if they are not in order make sure that the target_id is either greater than the node or less than the node.successor
-	if Between(target_id, node_obj.ChannelId, node_obj.Successor){
+	if Between(target_id, node_obj.ChannelId, node_obj.Successor) || target_id == node_obj.Successor{
 		log.Printf("\nFIND_SUCCESSOR:FOUND a place in between for %d. Successor is %d\n", target_id, node_obj.Successor)
 
 		//Tell node_obj that node_obj.Successor is target-ids successor (node_obj is equilvalent to respond-to)
@@ -574,7 +577,7 @@ func FindRingSuccessor(node_obj *node.Node, target_id int64, respond_to int64) i
 	//than the node but greater than the nodes successor
 	}else{
 		log.Printf("\nFIND_SUCCESSOR: Node %d is not between %d and %d\n", target_id, node_obj.ChannelId, node_obj.Successor)
-		log.Printf("\nFIND_SUCCESSOR:STILL NEED TO FIND a successor for %d and tell %d\n", target_id, respond_to)
+		log.Printf("\nFIND_SUCCESSOR:STILL NEED TO FIND a successor for %d and tell %d...will look at %d's table\n", target_id, respond_to, node_obj.ChannelId)
 		// var message = msg.Message {Do:"find-closest-preceeding-node", TargetId: target_id, RespondTo: node_obj.ChannelId}
     		//string_message, err := json.Marshal(message)
     		//check_error(err)
@@ -621,7 +624,7 @@ func FindClosestPreceedingNode(node_obj *node.Node, target_id int64){
 			//If the entry is 
 			if Between(finger_entry, node_obj.ChannelId, target_id) {			
 				//Send the closest preceeding id to the respond-to node that requested it
-				closest_preceeding := ReadNodeFingerTable(node_obj, int64(i))
+				closest_preceeding := finger_entry
 				var bucket_msg =  msg.BucketMessage {Identifier: closest_preceeding}
 				string_message, err := json.Marshal(bucket_msg)
 				check_error(err)
@@ -646,21 +649,40 @@ node_obj is the node that should refresh its table entries
 */
 func FixRingFingers(node_obj *node.Node){
 
+	var target_id int64
+	var raw_entry_id int64
 	for i :=0; i < len(node_obj.FingerTable); i++ {
 		//find the successor for target id n.id + 2^i for the ith entry
-		FindRingSuccessor(node_obj, int64(node_obj.ChannelId) + int64(math.Exp2(float64(i))), node_obj.ChannelId)
-		log.Printf("\nFIX_FINGERS:Looking for %d's successor at entry %d for Node %d\n", 
-			int64(node_obj.ChannelId) + int64(math.Exp2(float64(i))), i, node_obj.ChannelId)
+		raw_entry_id = int64(node_obj.ChannelId) + int64(math.Exp2(float64(i)))
+		target_id =  ShiftMod(raw_entry_id, int64(number_of_network_nodes))
+		log.Printf("\nFIX_FINGERS:Looking for %d --> %d successor at entry %d for Node %d\n", raw_entry_id, target_id, i, node_obj.ChannelId)
+
+		//Dont send the find successor message if we are already at the successor
+		if node_obj.Successor == node_obj.ChannelId{
+			FindRingSuccessor(node_obj, target_id, node_obj.ChannelId)
+		}else{
+			log.Printf("\nSending a find-ring-successor for %d --> %d to Node %d\n", raw_entry_id, target_id, node_obj.Successor)
+			var bucket_msg =  msg.Message {Do: "find-ring-successor", TargetId: target_id, RespondTo: node_obj.ChannelId}
+				string_message, err := json.Marshal(bucket_msg)
+				check_error(err)
+				SendDataToNetwork(node_obj.Successor, string(string_message))
+		}
 		//wait to recieve the successor result from find successor
 		bucket_data := GetDataFromBucket(node_obj.ChannelId)
 		entry_successor := ExtractIdFromBucketData(bucket_data)
-		log.Printf("\nFIX_FINGERS:Recieved successor %d for entry %d\n", entry_successor, i)
+		log.Printf("\nFIX_FINGERS:Recieved successor %d for %d --> %d at entry %d of Node %d's table\n", entry_successor, raw_entry_id, target_id , i, node_obj.ChannelId)
 		map_lock.Lock()
 		node_obj.FingerTable[int64(i)] = entry_successor
 		map_lock.Unlock()
 	}
 	log.Printf("\nFIX_FINGERS:Node %d updated to the following: \n", node_obj.ChannelId)
 	print_node(node_obj)
+}
+
+func ShiftMod(num int64, fact int64) int64{
+
+	divide_result := num % fact
+	return divide_result
 }
 
 /*

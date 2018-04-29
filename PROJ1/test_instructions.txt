@@ -1,3 +1,9 @@
 {"do":"join-ring", "sponsoring-node": 2, "test-send-to": 1}
 {"do":"stabilize-ring", "test-send-to": 1}
 {"do":"stabilize-ring", "test-send-to": 2}
+{"do":"stabilize-ring", "test-send-to": 1}
+{"do":"stabilize-ring", "test-send-to": 2}
+{"do":"fix-ring-fingers", "test-send-to": 2}
+{"do":"fix-ring-fingers", "test-send-to": 1}
+{"do":"fix-ring-fingers", "test-send-to": 2}
+{"do":"fix-ring-fingers", "test-send-to": 1}
