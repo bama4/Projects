@@ -7,7 +7,7 @@ Authors: Nick Allgood, Mariama Adangwa, and  Mohit Khatwani
 Instructions:
 To run and see debug messages run the program as follows:
 Non-Test Mode: go run main.go <INST FILE> <TEST_MODE> <AVG_WAIT_TIME> <N WHERE #NODES is 2^N>
-Test Mode: go run main.go <TEST_MODE> <INST FILE> <AVG_WAIT_TIME>
+Test Mode: go run main.go <INST FILE> <TEST_MODE> <AVG_WAIT_TIME>
 
 
 The json instructions for the coordinator should be in the instructions.txt file.
