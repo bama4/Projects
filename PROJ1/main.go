@@ -494,20 +494,37 @@ func RemoveData(node_obj *node.Node, respond_to int64, key string){
     return
 }
 
-func PutData(node_obj *node.Node, data msg.Data, respond_to int64) {
+func PutData(node_obj *node.Node, respond_to int64, key string, value string) {
 
-    log.Printf("\nPutting data with key %s by asking Node %d\n", data.Key, node_obj.ChannelId)
-    key_id := map_string_to_id(data.Key)
-    log.Printf("\nKey: %s mapped to hash of %d\n", data.Key, key_id)
+	// When this is sent to the node, it's that node that will be processing/being used to store the data
+	// respond_to is the channel_id that sent the message
+    log.Printf("\nPutting data with key %s by asking Node %d\n", key, node_obj.ChannelId)
+	
+	// Get Key ID to string
+    key_id := map_string_to_id(key)
+
+    log.Printf("\nKey: %s mapped to hash of %d\n", key, key_id)
+
+	// Get closest node
     FindClosestPreceedingNode(node_obj, key_id)
+
+	// The node that sent this message shoudl have data in the bucket, so scooop the bucket
     bucket_data := GetDataFromBucket(node_obj.ChannelId)
+
+	// Now we can get the closest node from the bucket
     closest := ExtractIdFromBucketData(bucket_data)
+
     log.Printf("\nPUT: Found %d as the closest to %d\n", closest, key_id)
+
+    log.Printf("\nPUT: Putting value: %s into Node: %d\n", value, closest)
+
+	/*
     if closest > key_id {
         //Then just say we are at the right node to store
         log.Printf("\nStored Data\n")
-        
-    }
+	}
+     */   
+
     return
 }
 
@@ -887,7 +904,7 @@ func net_node(channel_id int64){
                         test_channel <- "Done"
                     }
                 }else if message.Do == "put" {
-                    PutData(&node_obj, message.Data, node_obj.ChannelId)
+                    PutData(&node_obj, node_obj.ChannelId, message.Data.Key, message.Data.Value)
                     if test_mode == true {
                         test_channel <- "Done"
                     }
@@ -1054,6 +1071,9 @@ func coordinator(prog_args []string){
 
     //get a list of string json instructions to send to random nodes
     var instructions []string = create_message_list(file_name)
+
+	
+//	log.Printf("\nCoordiantor is getting the following instruction: %s\n", instructions)
     var channel_id int64
     for i := 0; i < len(instructions); i++ {
         //pick a random node in the ring to send the message to.
@@ -1061,6 +1081,9 @@ func coordinator(prog_args []string){
         random_ring_id = get_random_ring_node()
         random_network_id := get_random_network_node()
             byte_msg := []byte(instructions[i])
+
+			//log.Printf("\nCoordiantor is getting the following instruction: %s\n", string(byte_msg))
+
             var message msg.Message
             err := json.Unmarshal(byte_msg, &message)
             if err != nil {

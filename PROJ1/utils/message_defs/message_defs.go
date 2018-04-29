@@ -19,14 +19,20 @@ type Message struct {
 	Mode string `json:"mode"`
 	RespondTo int64 `json:"respond-to"`
 	TargetId int64 `json:target-id`
-	Data Data `json:"data"`
+	//Data Data `json:"data"`
+	Data struct {
+		Key string `json:"key"`
+		Value string `json:"value"`
+	}
 	TestSendTo int64 `json:"test-send-to"`
 }
 
+/*
 type Data struct {
 	Key string `json:"key"`
 	Value string `json:"value"`
 }
+ */
 
 /*
 The tag is a field that nodes use to ensure that the order
