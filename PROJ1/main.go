@@ -501,17 +501,14 @@ func PutData(node_obj *node.Node, respond_to int64, key string, value string) {
     bucket_data := GetDataFromBucket(node_obj.ChannelId)
     closest := ExtractIdFromBucketData(bucket_data)
 
-	log.Printf("\nChannel ID that is the closest: %d\n", closest)
-
-	/*
     log.Printf("\nPUT: Found %d as the closest to %d\n", closest, key_id)
+
     if closest > key_id {
         //Then just say we are at the right node to store
-        log.Printf("\nStored Data\n")
+        log.Printf("\n@@@@@----- Stored Data at node %d -----@@@@@@@\n", closest)
         
     }
 
-	*/
     return
 }
 
@@ -836,8 +833,11 @@ func net_node(channel_id int64){
                 log.Printf("\nNode: %d received the following message:%s\n", channel_id, msg_recv)
 
                 byte_msg := []byte(msg_recv)
+
                 var message msg.Message
                 err := json.Unmarshal(byte_msg, &message)
+
+				//log.Printf("\n---- UnMarshal Data Struct: %+v -----\n", message)
                 if err != nil {
                     log.Printf("Node: %d failed to unmarshal the json string", channel_id)
                     break
@@ -848,7 +848,7 @@ func net_node(channel_id int64){
                 //Perform join-ring action
                 if message.Do == "join-ring" {
 
-					log.Printf("\n***** JOIN-RING INSIDE NET_NODE *****\n")
+					//log.Printf("\n***** JOIN-RING INSIDE NET_NODE *****\n")
                     
                     if val, ok := ring_nodes.Load(channel_id); ok != true {
                         _ = val
@@ -886,8 +886,6 @@ func net_node(channel_id int64){
                     }else{
                         log.Printf("\nRespondTo node: %d is not responding...not in ring?\n", message.RespondTo)
                     }
-
-                    
                 } else if message.Do == "find-ring-predecessor" {
                     //Tell node_obj to find the predecessor of target id and report back to respond-to
                     FindRingPredecessor(&node_obj, message.TargetId, message.RespondTo)
@@ -1082,7 +1080,7 @@ func coordinator(prog_args []string){
     var instructions []string = create_message_list(file_name)
 
 
-	log.Printf("\nRaw instructions: %s\n", instructions)
+	//log.Printf("\nRaw instructions: %s\n", instructions)
     var channel_id int64
     for i := 0; i < len(instructions); i++ {
         //pick a random node in the ring to send the message to.
@@ -1091,13 +1089,21 @@ func coordinator(prog_args []string){
         random_network_id := get_random_network_node()
             byte_msg := []byte(instructions[i])
 
-			log.Printf("\n****Byte msg Instruction: %s\n", instructions[i])
+			//log.Printf("\n****Byte msg Instruction: %s\n", instructions[i])
             var message msg.Message
+
             err := json.Unmarshal(byte_msg, &message)
+		    //check_error(err)	
+
+			//log.Printf("\n@@@@@@------ UnMarshal Struct Message: %+v -------@@@@@@@\n", message)
+
             if err != nil {
                 log.Println("Reached the end of the json instructions")
                 break
             }
+
+			//log.Printf("\n@@@@@@@---- Message.Do: %s @@@@@@-----\n", message.Do) 
+
             //format join ring instruction with random sponsoring node
             if message.Do == "join-ring" {
                 random_ring_id = -1
