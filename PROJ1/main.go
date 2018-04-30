@@ -504,14 +504,21 @@ func PutData(node_obj *node.Node, respond_to int64, key string, value string) {
 
     log.Printf("\nPUT: Found %d as the closest to %d\n", closest, key_id)
 
-	// while closest < key_id { }
     if closest > key_id {
         //Then just say we are at the right node to store
-        log.Printf("\n@@@@@----- Stored Data at node %d -----@@@@@@@\n", closest)
-		//node.DataTable[key] := value
+		log.Printf("\nPUT: Putting Key: %s with value: %s at Node: %d\n", key, value, node_obj.ChannelId) 
+		node_obj.DataTable[key] = value
         
     } else {
-        log.Printf("\n@@@@@----- Closest Node not found, looking again...-----@@@@@\n")
+		// This is the wrong node to store the data
+		// Need to send this message to the successor
+		// Get Successor Channel ID
+		// Send Message to Successor
+		//node_obj.DataTable[key] := value
+
+	 	log.Printf("\nPUT: Sending key: %s and value: %s to bucket for Node: %d\n", key, value, node_obj.Successor)	
+		SendDataToBucket(node_obj.Successor, key)
+		SendDataToBucket(node_obj.Successor, value)
 	}
 
     return

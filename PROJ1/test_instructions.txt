@@ -1,4 +1,7 @@
 {"do":"join-ring", "sponsoring-node": 2, "test-send-to": 1}
+{"do":"join-ring", "sponsoring-node": 2, "test-send-to": 2}
+{"do":"put","data":{"key":"fff","value":"DFDF"}, "test-send-to":1}
+{"do":"put","data":{"key":"xxx","value":"XXXX"}, "test-send-to":2}
 {"do":"stabilize-ring", "test-send-to": 1}
 {"do":"stabilize-ring", "test-send-to": 2}
 {"do":"stabilize-ring", "test-send-to": 1}
