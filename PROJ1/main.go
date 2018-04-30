@@ -513,11 +513,11 @@ func RemoveData(node_obj *node.Node, respond_to int64, key string){
 	return
 }
 
-func PutData(node_obj *node.Node, data msg.Data, respond_to int64) {
+func PutData(node_obj *node.Node, key string, value string, respond_to int64) {
 
-	log.Printf("\nPutting data with key %s by asking Node %d\n", data.Key, node_obj.ChannelId)
-	key_id := map_string_to_id(data.Key)
-	log.Printf("\nKey: %s mapped to hash of %d\n", data.Key, key_id)
+	log.Printf("\nPutting data with key %s by asking Node %d\n", key, node_obj.ChannelId)
+	key_id := map_string_to_id(key)
+	log.Printf("\nKey: %s mapped to hash of %d\n", key, key_id)
 	FindClosestPreceedingNode(node_obj, key_id)
 	bucket_data := GetDataFromBucket(node_obj.ChannelId)
 	closest := ExtractIdFromBucketData(bucket_data)
@@ -932,7 +932,7 @@ func net_node(channel_id int64){
 						test_channel <- "Done"
 					}
 				}else if message.Do == "put" {
-					PutData(&node_obj, message.Data, node_obj.ChannelId)
+					PutData(&node_obj, message.Data.Key,message.Data.Value, node_obj.ChannelId)
 					if test_mode == true {
 						test_channel <- "Done"
 					}
