@@ -126,6 +126,12 @@ This is the mean time for each node to wait before accepting the next message in
 */
 var mean_wait_value float64
 
+/*
+Node Response Timeout.
+A timeout primarily used by the bucket for reading responses
+*/
+var response_timeout = 20
+
 func check_error(err error){
 	if err != nil {
 		log.Println("Error : ", err)
@@ -302,16 +308,31 @@ func ExtractIdFromBucketData(data string)(identifier int64){
 	byte_msg := []byte(data)
 	var message msg.BucketMessage
 	err := json.Unmarshal(byte_msg, &message)
-	check_error(err)
+	if err != nil {
+		log.Println("Failed to extract the following bucket data: ", data)
+		identifier = -1
+		return
+	}
 	identifier = message.Identifier
 	return
 }
 /*
 This function recieves data from the designated bucket.
 The node id given is used to read the correct bucket
+If the get data from bucket action times out, an empty string is returned
 */
 func GetDataFromBucket(node_id int64)(bucket_data string){
 	log.Printf("\nBUCKET:Node: %d's  data is waiting for data to be read ....\n", node_id)
+	select {
+		case bucket_data = <-ring_nodes_bucket[node_id]:
+			return
+
+		//timeout after response_time seconds of not recieving data
+		case <-time.After(time.Duration(response_timeout) * time.Second):
+			log.Printf("\nWARNING:Timeout when listening for response data for Node %d\n",node_id )
+			bucket_data = ""
+			return
+	}
 	bucket_data = <- ring_nodes_bucket[node_id]
 	log.Printf("\nBUCKET:Node: %d's data has finished being read ....\n", node_id)
 	return
@@ -492,15 +513,16 @@ func RemoveData(node_obj *node.Node, respond_to int64, key string){
 	return
 }
 
-func PutData(node_obj *node.Node, data msg.Data, respond_to int64) {
+func PutData(node_obj *node.Node, key string, value string, respond_to int64) {
 
-	log.Printf("\nPutting data with key %s by asking Node %d\n", data.Key, node_obj.ChannelId)
-	key_id := map_string_to_id(data.Key)
-	log.Printf("\nKey: %s mapped to hash of %d\n", data.Key, key_id)
+	log.Printf("\nPutting data with key %s by asking Node %d\n", key, node_obj.ChannelId)
+	key_id := map_string_to_id(key)
+	log.Printf("\nKey: %s mapped to hash of %d\n", key, key_id)
 	FindClosestPreceedingNode(node_obj, key_id)
 	bucket_data := GetDataFromBucket(node_obj.ChannelId)
 	closest := ExtractIdFromBucketData(bucket_data)
 	log.Printf("\nPUT: Found %d as the closest to %d\n", closest, key_id)
+	node_obj.DataTable[key] = value
 	if closest > key_id {
 		//Then just say we are at the right node to store
 		log.Printf("\nStored Data\n")
@@ -583,6 +605,12 @@ func FindRingSuccessor(node_obj *node.Node, target_id int64, respond_to int64) i
 		FindClosestPreceedingNode(node_obj, target_id)
 		bucket_data := GetDataFromBucket(node_obj.ChannelId)
 		closest_preceeding := ExtractIdFromBucketData(bucket_data)
+
+		//Check if Id failed to get extracted
+		if closest_preceeding == -1 {
+			log.Printf("\nFIND_SUCCESSOR: Failed to find successor for %d\n", target_id)
+			SendDataToBucket(respond_to, "")
+		}
 		log.Printf("\nFIND_SUCCESSOR: Node %d Found the closest preceeding node of %d to be %d\n", node_obj.ChannelId, target_id, closest_preceeding)
 		//If we are at the closest_preceeding node, then just return that as the successor
 		if closest_preceeding == node_obj.ChannelId {
@@ -905,7 +933,7 @@ func net_node(channel_id int64){
 						test_channel <- "Done"
 					}
 				}else if message.Do == "put" {
-					PutData(&node_obj, message.Data, node_obj.ChannelId)
+					PutData(&node_obj, message.Data.Key,message.Data.Value, node_obj.ChannelId)
 					if test_mode == true {
 						test_channel <- "Done"
 					}
@@ -1082,7 +1110,8 @@ func coordinator(prog_args []string){
 			var message msg.Message
 			err := json.Unmarshal(byte_msg, &message)
 			if err != nil {
-				log.Println("Reached the end of the json instructions")
+				log.Println("+++++++++++++++ERROR: Failed To Process the following instruction: ",
+					instructions[i], "+++++++++++++++++++")
 				break
 			}
 			//format join ring instruction with random sponsoring node
@@ -1116,6 +1145,7 @@ func coordinator(prog_args []string){
 					log.Println("There is no node in the ring to fix fingers")
 					continue
 				}
+
 			}else{
 
 				//check test mode
@@ -1141,8 +1171,23 @@ func coordinator(prog_args []string){
 			}else{
 				time.Sleep(3)
 			}
+
 	}
-	
+
+		//Just keep throwing random fix fingers and stabilizes after all of the instructions are
+		//Finished being read if not in test mode
+
+/*
+		if test_mode == false {
+			for true{
+				random_ring_id = get_random_ring_node()
+				time.Sleep(20)
+				SendDataToNetwork(random_ring_id, "{\"do\": \"fix-ring-fingers\"}")
+				SendDataToNetwork(random_ring_id, "{\"do\": \"stabilize-ring\"}")
+			
+			}	
+		}
+*/
 }
 
 
