@@ -522,6 +522,7 @@ func PutData(node_obj *node.Node, key string, value string, respond_to int64) {
 	bucket_data := GetDataFromBucket(node_obj.ChannelId)
 	closest := ExtractIdFromBucketData(bucket_data)
 	log.Printf("\nPUT: Found %d as the closest to %d\n", closest, key_id)
+	node_obj.DataTable[key] = value
 	if closest > key_id {
 		//Then just say we are at the right node to store
 		log.Printf("\nStored Data\n")
@@ -1109,7 +1110,8 @@ func coordinator(prog_args []string){
 			var message msg.Message
 			err := json.Unmarshal(byte_msg, &message)
 			if err != nil {
-				log.Println("Reached the end of the json instructions")
+				log.Println("+++++++++++++++ERROR: Failed To Process the following instruction: ",
+					instructions[i], "+++++++++++++++++++")
 				break
 			}
 			//format join ring instruction with random sponsoring node
@@ -1143,6 +1145,7 @@ func coordinator(prog_args []string){
 					log.Println("There is no node in the ring to fix fingers")
 					continue
 				}
+
 			}else{
 
 				//check test mode
