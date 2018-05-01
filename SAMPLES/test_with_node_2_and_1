@@ -1,0 +1,730 @@
+go run main.go YES test_instructions.txt 1
+2018/04/29 20:01:42 
+Starting program with the following:
+Instruction File: test_instructions.txt
+Number of network nodes: 4
+Mean wait time: 1.000000
+2018/04/29 20:01:42 This is the coordinator.
+2018/04/29 20:01:42 Node 2 was used to create the ring.
+2018/04/29 20:01:42 
+Adding Node 3 to network
+2018/04/29 20:01:42 
+Adding Node 1 to network
+2018/04/29 20:01:42 
+Adding Node 0 to network
+2018/04/29 20:01:42 INIT_TOPOLOGY:Failed to generate any more network nodes
+2018/04/29 20:01:42 
+Waiting 0 seconds before processing message for Node: 1
+2018/04/29 20:01:42 
+Node: 1 received the following message:{"do":"join-ring","sponsoring-node":2,"mode":"","respond-to":0,"TargetId":0,"Data":{"key":"","value":""},"test-send-to":1}
+2018/04/29 20:01:42 
+JOIN_RING:Node 1 is joining the ring now
+2018/04/29 20:01:42 
+BUCKET:Node: 2's  data is waiting for data to be read ....
+2018/04/29 20:01:42 
+Waiting 6 seconds before processing message for Node: 2
+2018/04/29 20:01:44 
+Node: 2 received the following message:{"do":"find-ring-successor","sponsoring-node":0,"mode":"","respond-to":2,"TargetId":1,"Data":{"key":"","value":""},"test-send-to":0}
+2018/04/29 20:01:44 
+FIND_SUCCESSOR:Finding the successor of 1 by asking Node: 2
+2018/04/29 20:01:44 
+BETWEEN: Checking if 1 is in between 2 and 2
+2018/04/29 20:01:44 BEETWEEN: 1 target and 2 first
+2018/04/29 20:01:44 
+FIND_SUCCESSOR:FOUND a place in between for 1. Successor is 2
+2018/04/29 20:01:44 
+BUCKET:Node: 2 was written bucket data
+2018/04/29 20:01:44 +++LIST OF NODES CURRENTLY IN THE RING+++
+2018/04/29 20:01:44 
+Node 2 is in the ring
+2018/04/29 20:01:44 
++++Contents of Node 2+++
+2018/04/29 20:01:44 Channel Id/Node Id: 2
+2018/04/29 20:01:44 +FingerTable+:
+2018/04/29 20:01:44 Finger Table at 0 is 2
+2018/04/29 20:01:44 Finger Table at 1 is 2
+2018/04/29 20:01:44 +DataTable+:
+2018/04/29 20:01:44 Successor Id: 2
+2018/04/29 20:01:44 Predecessor Id: 2
+2018/04/29 20:01:44 
++++END of Contents of Node 2+++
+2018/04/29 20:01:44 +++END OF LIST OF NODES CURRENTLY IN THE RING+++
+2018/04/29 20:01:44 
+JOIN_RING:SENT find successor message with sponsoring node: 2 and target node: 1. Successor of target is 2
+2018/04/29 20:01:44 +++LIST OF NODES CURRENTLY IN THE RING+++
+2018/04/29 20:01:44 
+Node 2 is in the ring
+2018/04/29 20:01:44 
++++Contents of Node 2+++
+2018/04/29 20:01:44 Channel Id/Node Id: 2
+2018/04/29 20:01:44 +FingerTable+:
+2018/04/29 20:01:44 Finger Table at 0 is 2
+2018/04/29 20:01:44 Finger Table at 1 is 2
+2018/04/29 20:01:44 +DataTable+:
+2018/04/29 20:01:44 Successor Id: 2
+2018/04/29 20:01:44 Predecessor Id: 2
+2018/04/29 20:01:44 
++++END of Contents of Node 2+++
+2018/04/29 20:01:44 
+Node 1 is in the ring
+2018/04/29 20:01:44 
++++Contents of Node 1+++
+2018/04/29 20:01:44 Channel Id/Node Id: 1
+2018/04/29 20:01:44 +FingerTable+:
+2018/04/29 20:01:44 +DataTable+:
+2018/04/29 20:01:44 Successor Id: 2
+2018/04/29 20:01:44 Predecessor Id: nil
+2018/04/29 20:01:44 
++++END of Contents of Node 1+++
+2018/04/29 20:01:44 +++END OF LIST OF NODES CURRENTLY IN THE RING+++
+2018/04/29 20:01:44 
+Waiting 0 seconds before processing message for Node: 1
+2018/04/29 20:01:44 
+Node: 1 received the following message:{"do":"stabilize-ring","sponsoring-node":0,"mode":"","respond-to":0,"TargetId":0,"Data":{"key":"","value":""},"test-send-to":1}
+2018/04/29 20:01:44 
+STABILIZE:About to stabilize Node 1
+2018/04/29 20:01:44 
+STABILIZE: To Stabilize Node 1, told 2 to return predecessor
+2018/04/29 20:01:44 
+BUCKET:Node: 1's  data is waiting for data to be read ....
+2018/04/29 20:01:44 
+Waiting 2 seconds before processing message for Node: 2
+2018/04/29 20:01:44 
+Node: 2 received the following message:{"do":"get-predecessor","sponsoring-node":0,"mode":"","respond-to":1,"TargetId":0,"Data":{"key":"","value":""},"test-send-to":0}
+2018/04/29 20:01:44 
+BUCKET:Node: 1 was written bucket data
+2018/04/29 20:01:44 +++LIST OF NODES CURRENTLY IN THE RING+++
+2018/04/29 20:01:44 
+Node 2 is in the ring
+2018/04/29 20:01:44 
++++Contents of Node 2+++
+2018/04/29 20:01:44 Channel Id/Node Id: 2
+2018/04/29 20:01:44 +FingerTable+:
+2018/04/29 20:01:44 Finger Table at 0 is 2
+2018/04/29 20:01:44 Finger Table at 1 is 2
+2018/04/29 20:01:44 +DataTable+:
+2018/04/29 20:01:44 Successor Id: 2
+2018/04/29 20:01:44 Predecessor Id: 2
+2018/04/29 20:01:44 
++++END of Contents of Node 2+++
+2018/04/29 20:01:44 
+Node 1 is in the ring
+2018/04/29 20:01:44 
++++Contents of Node 1+++
+2018/04/29 20:01:44 Channel Id/Node Id: 1
+2018/04/29 20:01:44 +FingerTable+:
+2018/04/29 20:01:44 +DataTable+:
+2018/04/29 20:01:44 Successor Id: 2
+2018/04/29 20:01:44 Predecessor Id: nil
+2018/04/29 20:01:44 
++++END of Contents of Node 1+++
+2018/04/29 20:01:44 +++END OF LIST OF NODES CURRENTLY IN THE RING+++
+2018/04/29 20:01:44 
+BETWEEN: Checking if 2 is in between 1 and 2
+2018/04/29 20:01:44 
+STABILIZE: Node 1 is Telling Node 2 to perform Notify
+2018/04/29 20:01:44 +++LIST OF NODES CURRENTLY IN THE RING+++
+2018/04/29 20:01:44 
+Node 2 is in the ring
+2018/04/29 20:01:44 
++++Contents of Node 2+++
+2018/04/29 20:01:44 Channel Id/Node Id: 2
+2018/04/29 20:01:44 +FingerTable+:
+2018/04/29 20:01:44 Finger Table at 0 is 2
+2018/04/29 20:01:44 Finger Table at 1 is 2
+2018/04/29 20:01:44 +DataTable+:
+2018/04/29 20:01:44 Successor Id: 2
+2018/04/29 20:01:44 Predecessor Id: 2
+2018/04/29 20:01:44 
++++END of Contents of Node 2+++
+2018/04/29 20:01:44 
+Node 1 is in the ring
+2018/04/29 20:01:44 
++++Contents of Node 1+++
+2018/04/29 20:01:44 Channel Id/Node Id: 1
+2018/04/29 20:01:44 +FingerTable+:
+2018/04/29 20:01:44 +DataTable+:
+2018/04/29 20:01:44 Successor Id: 2
+2018/04/29 20:01:44 Predecessor Id: nil
+2018/04/29 20:01:44 
++++END of Contents of Node 1+++
+2018/04/29 20:01:44 +++END OF LIST OF NODES CURRENTLY IN THE RING+++
+2018/04/29 20:01:44 
+Waiting 0 seconds before processing message for Node: 2
+2018/04/29 20:01:44 
+Node: 2 received the following message:{"do":"ring-notify","sponsoring-node":0,"mode":"","respond-to":1,"TargetId":0,"Data":{"key":"","value":""},"test-send-to":0}
+2018/04/29 20:01:44 
+BETWEEN: Checking if 1 is in between 2 and 2
+2018/04/29 20:01:44 BEETWEEN: 1 target and 2 first
+2018/04/29 20:01:44 +++LIST OF NODES CURRENTLY IN THE RING+++
+2018/04/29 20:01:44 
+Node 2 is in the ring
+2018/04/29 20:01:44 
++++Contents of Node 2+++
+2018/04/29 20:01:44 Channel Id/Node Id: 2
+2018/04/29 20:01:44 +FingerTable+:
+2018/04/29 20:01:44 Finger Table at 0 is 2
+2018/04/29 20:01:44 Finger Table at 1 is 2
+2018/04/29 20:01:44 +DataTable+:
+2018/04/29 20:01:44 Successor Id: 2
+2018/04/29 20:01:44 Predecessor Id: 1
+2018/04/29 20:01:44 
++++END of Contents of Node 2+++
+2018/04/29 20:01:44 
+Node 1 is in the ring
+2018/04/29 20:01:44 
++++Contents of Node 1+++
+2018/04/29 20:01:44 Channel Id/Node Id: 1
+2018/04/29 20:01:44 +FingerTable+:
+2018/04/29 20:01:44 +DataTable+:
+2018/04/29 20:01:44 Successor Id: 2
+2018/04/29 20:01:44 Predecessor Id: nil
+2018/04/29 20:01:44 
++++END of Contents of Node 1+++
+2018/04/29 20:01:44 +++END OF LIST OF NODES CURRENTLY IN THE RING+++
+2018/04/29 20:01:44 
+Waiting 0 seconds before processing message for Node: 2
+2018/04/29 20:01:45 
+Node: 2 received the following message:{"do":"stabilize-ring","sponsoring-node":0,"mode":"","respond-to":0,"TargetId":0,"Data":{"key":"","value":""},"test-send-to":2}
+2018/04/29 20:01:45 
+STABILIZE:About to stabilize Node 2
+2018/04/29 20:01:45 
+STABILIZE: To Stabilize Node 2, told 2 to return predecessor
+2018/04/29 20:01:45 
+BETWEEN: Checking if 1 is in between 2 and 2
+2018/04/29 20:01:45 BEETWEEN: 1 target and 2 first
+2018/04/29 20:01:45 
+STABILIZE: Node 2's successor has been set to Node 1
+2018/04/29 20:01:45 
+STABILIZE: Node 2 is Telling Node 1 to perform Notify
+2018/04/29 20:01:45 +++LIST OF NODES CURRENTLY IN THE RING+++
+2018/04/29 20:01:45 
+Node 2 is in the ring
+2018/04/29 20:01:45 
++++Contents of Node 2+++
+2018/04/29 20:01:45 Channel Id/Node Id: 2
+2018/04/29 20:01:45 +FingerTable+:
+2018/04/29 20:01:45 Finger Table at 1 is 2
+2018/04/29 20:01:45 Finger Table at 0 is 2
+2018/04/29 20:01:45 +DataTable+:
+2018/04/29 20:01:45 Successor Id: 1
+2018/04/29 20:01:45 Predecessor Id: 1
+2018/04/29 20:01:45 
++++END of Contents of Node 2+++
+2018/04/29 20:01:45 
+Node 1 is in the ring
+2018/04/29 20:01:45 
++++Contents of Node 1+++
+2018/04/29 20:01:45 Channel Id/Node Id: 1
+2018/04/29 20:01:45 +FingerTable+:
+2018/04/29 20:01:45 +DataTable+:
+2018/04/29 20:01:45 Successor Id: 2
+2018/04/29 20:01:45 Predecessor Id: nil
+2018/04/29 20:01:45 
++++END of Contents of Node 1+++
+2018/04/29 20:01:45 +++END OF LIST OF NODES CURRENTLY IN THE RING+++
+2018/04/29 20:01:45 
+Waiting 0 seconds before processing message for Node: 1
+2018/04/29 20:01:45 
+Node: 1 received the following message:{"do":"ring-notify","sponsoring-node":0,"mode":"","respond-to":2,"TargetId":0,"Data":{"key":"","value":""},"test-send-to":0}
+2018/04/29 20:01:45 +++LIST OF NODES CURRENTLY IN THE RING+++
+2018/04/29 20:01:45 
+Node 2 is in the ring
+2018/04/29 20:01:45 
++++Contents of Node 2+++
+2018/04/29 20:01:45 Channel Id/Node Id: 2
+2018/04/29 20:01:45 +FingerTable+:
+2018/04/29 20:01:45 Finger Table at 1 is 2
+2018/04/29 20:01:45 Finger Table at 0 is 2
+2018/04/29 20:01:45 +DataTable+:
+2018/04/29 20:01:45 Successor Id: 1
+2018/04/29 20:01:45 Predecessor Id: 1
+2018/04/29 20:01:45 
++++END of Contents of Node 2+++
+2018/04/29 20:01:45 
+Node 1 is in the ring
+2018/04/29 20:01:45 
++++Contents of Node 1+++
+2018/04/29 20:01:45 Channel Id/Node Id: 1
+2018/04/29 20:01:45 +FingerTable+:
+2018/04/29 20:01:45 +DataTable+:
+2018/04/29 20:01:45 Successor Id: 2
+2018/04/29 20:01:45 Predecessor Id: 2
+2018/04/29 20:01:45 
++++END of Contents of Node 1+++
+2018/04/29 20:01:45 +++END OF LIST OF NODES CURRENTLY IN THE RING+++
+2018/04/29 20:01:45 
+Waiting 0 seconds before processing message for Node: 1
+2018/04/29 20:01:45 
+Node: 1 received the following message:{"do":"stabilize-ring","sponsoring-node":0,"mode":"","respond-to":0,"TargetId":0,"Data":{"key":"","value":""},"test-send-to":1}
+2018/04/29 20:01:45 
+STABILIZE:About to stabilize Node 1
+2018/04/29 20:01:45 
+STABILIZE: To Stabilize Node 1, told 2 to return predecessor
+2018/04/29 20:01:45 
+BUCKET:Node: 1's  data is waiting for data to be read ....
+2018/04/29 20:01:45 
+Waiting 1 seconds before processing message for Node: 2
+2018/04/29 20:01:48 
+Node: 2 received the following message:{"do":"get-predecessor","sponsoring-node":0,"mode":"","respond-to":1,"TargetId":0,"Data":{"key":"","value":""},"test-send-to":0}
+2018/04/29 20:01:48 
+BUCKET:Node: 1 was written bucket data
+2018/04/29 20:01:48 +++LIST OF NODES CURRENTLY IN THE RING+++
+2018/04/29 20:01:48 
+Node 2 is in the ring
+2018/04/29 20:01:48 
++++Contents of Node 2+++
+2018/04/29 20:01:48 Channel Id/Node Id: 2
+2018/04/29 20:01:48 +FingerTable+:
+2018/04/29 20:01:48 Finger Table at 0 is 2
+2018/04/29 20:01:48 Finger Table at 1 is 2
+2018/04/29 20:01:48 +DataTable+:
+2018/04/29 20:01:48 Successor Id: 1
+2018/04/29 20:01:48 Predecessor Id: 1
+2018/04/29 20:01:48 
++++END of Contents of Node 2+++
+2018/04/29 20:01:48 
+Node 1 is in the ring
+2018/04/29 20:01:48 
++++Contents of Node 1+++
+2018/04/29 20:01:48 Channel Id/Node Id: 1
+2018/04/29 20:01:48 +FingerTable+:
+2018/04/29 20:01:48 +DataTable+:
+2018/04/29 20:01:48 Successor Id: 2
+2018/04/29 20:01:48 Predecessor Id: 2
+2018/04/29 20:01:48 
++++END of Contents of Node 1+++
+2018/04/29 20:01:48 +++END OF LIST OF NODES CURRENTLY IN THE RING+++
+2018/04/29 20:01:48 
+BETWEEN: Checking if 1 is in between 1 and 2
+2018/04/29 20:01:48 
+STABILIZE: Node 1 is Telling Node 2 to perform Notify
+2018/04/29 20:01:48 +++LIST OF NODES CURRENTLY IN THE RING+++
+2018/04/29 20:01:48 
+Node 2 is in the ring
+2018/04/29 20:01:48 
++++Contents of Node 2+++
+2018/04/29 20:01:48 Channel Id/Node Id: 2
+2018/04/29 20:01:48 +FingerTable+:
+2018/04/29 20:01:48 Finger Table at 0 is 2
+2018/04/29 20:01:48 Finger Table at 1 is 2
+2018/04/29 20:01:48 +DataTable+:
+2018/04/29 20:01:48 Successor Id: 1
+2018/04/29 20:01:48 Predecessor Id: 1
+2018/04/29 20:01:48 
++++END of Contents of Node 2+++
+2018/04/29 20:01:48 
+Node 1 is in the ring
+2018/04/29 20:01:48 
++++Contents of Node 1+++
+2018/04/29 20:01:48 Channel Id/Node Id: 1
+2018/04/29 20:01:48 +FingerTable+:
+2018/04/29 20:01:48 +DataTable+:
+2018/04/29 20:01:48 Successor Id: 2
+2018/04/29 20:01:48 Predecessor Id: 2
+2018/04/29 20:01:48 
++++END of Contents of Node 1+++
+2018/04/29 20:01:48 +++END OF LIST OF NODES CURRENTLY IN THE RING+++
+2018/04/29 20:01:48 
+Waiting 3 seconds before processing message for Node: 2
+2018/04/29 20:01:49 
+Node: 2 received the following message:{"do":"ring-notify","sponsoring-node":0,"mode":"","respond-to":1,"TargetId":0,"Data":{"key":"","value":""},"test-send-to":0}
+2018/04/29 20:01:49 
+BETWEEN: Checking if 1 is in between 1 and 2
+2018/04/29 20:01:49 +++LIST OF NODES CURRENTLY IN THE RING+++
+2018/04/29 20:01:49 
+Node 2 is in the ring
+2018/04/29 20:01:49 
++++Contents of Node 2+++
+2018/04/29 20:01:49 Channel Id/Node Id: 2
+2018/04/29 20:01:49 +FingerTable+:
+2018/04/29 20:01:49 Finger Table at 0 is 2
+2018/04/29 20:01:49 Finger Table at 1 is 2
+2018/04/29 20:01:49 +DataTable+:
+2018/04/29 20:01:49 Successor Id: 1
+2018/04/29 20:01:49 Predecessor Id: 1
+2018/04/29 20:01:49 
++++END of Contents of Node 2+++
+2018/04/29 20:01:49 
+Node 1 is in the ring
+2018/04/29 20:01:49 
++++Contents of Node 1+++
+2018/04/29 20:01:49 Channel Id/Node Id: 1
+2018/04/29 20:01:49 +FingerTable+:
+2018/04/29 20:01:49 +DataTable+:
+2018/04/29 20:01:49 Successor Id: 2
+2018/04/29 20:01:49 Predecessor Id: 2
+2018/04/29 20:01:49 
++++END of Contents of Node 1+++
+2018/04/29 20:01:49 +++END OF LIST OF NODES CURRENTLY IN THE RING+++
+2018/04/29 20:01:49 
+Waiting 1 seconds before processing message for Node: 2
+2018/04/29 20:01:49 
+Node: 2 received the following message:{"do":"stabilize-ring","sponsoring-node":0,"mode":"","respond-to":0,"TargetId":0,"Data":{"key":"","value":""},"test-send-to":2}
+2018/04/29 20:01:49 
+STABILIZE:About to stabilize Node 2
+2018/04/29 20:01:49 
+STABILIZE: To Stabilize Node 2, told 1 to return predecessor
+2018/04/29 20:01:49 
+BUCKET:Node: 2's  data is waiting for data to be read ....
+2018/04/29 20:01:49 
+Waiting 0 seconds before processing message for Node: 1
+2018/04/29 20:01:51 
+Node: 1 received the following message:{"do":"get-predecessor","sponsoring-node":0,"mode":"","respond-to":2,"TargetId":0,"Data":{"key":"","value":""},"test-send-to":0}
+2018/04/29 20:01:51 
+BUCKET:Node: 2 was written bucket data
+2018/04/29 20:01:51 +++LIST OF NODES CURRENTLY IN THE RING+++
+2018/04/29 20:01:51 
+Node 2 is in the ring
+2018/04/29 20:01:51 
++++Contents of Node 2+++
+2018/04/29 20:01:51 Channel Id/Node Id: 2
+2018/04/29 20:01:51 +FingerTable+:
+2018/04/29 20:01:51 Finger Table at 0 is 2
+2018/04/29 20:01:51 Finger Table at 1 is 2
+2018/04/29 20:01:51 +DataTable+:
+2018/04/29 20:01:51 Successor Id: 1
+2018/04/29 20:01:51 Predecessor Id: 1
+2018/04/29 20:01:51 
++++END of Contents of Node 2+++
+2018/04/29 20:01:51 
+Node 1 is in the ring
+2018/04/29 20:01:51 
++++Contents of Node 1+++
+2018/04/29 20:01:51 Channel Id/Node Id: 1
+2018/04/29 20:01:51 +FingerTable+:
+2018/04/29 20:01:51 +DataTable+:
+2018/04/29 20:01:51 Successor Id: 2
+2018/04/29 20:01:51 Predecessor Id: 2
+2018/04/29 20:01:51 
++++END of Contents of Node 1+++
+2018/04/29 20:01:51 +++END OF LIST OF NODES CURRENTLY IN THE RING+++
+2018/04/29 20:01:51 
+BETWEEN: Checking if 2 is in between 2 and 1
+2018/04/29 20:01:51 BEETWEEN: 2 target and 2 first
+2018/04/29 20:01:51 
+STABILIZE: Node 2 is Telling Node 1 to perform Notify
+2018/04/29 20:01:51 +++LIST OF NODES CURRENTLY IN THE RING+++
+2018/04/29 20:01:51 
+Node 2 is in the ring
+2018/04/29 20:01:51 
++++Contents of Node 2+++
+2018/04/29 20:01:51 Channel Id/Node Id: 2
+2018/04/29 20:01:51 +FingerTable+:
+2018/04/29 20:01:51 Finger Table at 0 is 2
+2018/04/29 20:01:51 Finger Table at 1 is 2
+2018/04/29 20:01:51 +DataTable+:
+2018/04/29 20:01:51 Successor Id: 1
+2018/04/29 20:01:51 Predecessor Id: 1
+2018/04/29 20:01:51 
++++END of Contents of Node 2+++
+2018/04/29 20:01:51 
+Node 1 is in the ring
+2018/04/29 20:01:51 
++++Contents of Node 1+++
+2018/04/29 20:01:51 Channel Id/Node Id: 1
+2018/04/29 20:01:51 +FingerTable+:
+2018/04/29 20:01:51 +DataTable+:
+2018/04/29 20:01:51 Successor Id: 2
+2018/04/29 20:01:51 Predecessor Id: 2
+2018/04/29 20:01:51 
++++END of Contents of Node 1+++
+2018/04/29 20:01:51 +++END OF LIST OF NODES CURRENTLY IN THE RING+++
+2018/04/29 20:01:51 
+Waiting 0 seconds before processing message for Node: 2
+2018/04/29 20:01:51 
+Node: 2 received the following message:{"do":"fix-ring-fingers","sponsoring-node":0,"mode":"","respond-to":0,"TargetId":0,"Data":{"key":"","value":""},"test-send-to":2}
+2018/04/29 20:01:51 
+FIX_FINGERS:Looking for 3 --> 3 successor at entry 0 for Node 2
+2018/04/29 20:01:51 
+Sending a find-ring-successor for 3 --> 3 to Node 1
+2018/04/29 20:01:51 
+BUCKET:Node: 2's  data is waiting for data to be read ....
+2018/04/29 20:01:51 
+Waiting 2 seconds before processing message for Node: 1
+2018/04/29 20:01:57 
+Node: 1 received the following message:{"do":"ring-notify","sponsoring-node":0,"mode":"","respond-to":2,"TargetId":0,"Data":{"key":"","value":""},"test-send-to":0}
+2018/04/29 20:01:57 
+BETWEEN: Checking if 2 is in between 2 and 1
+2018/04/29 20:01:57 BEETWEEN: 2 target and 2 first
+2018/04/29 20:01:57 +++LIST OF NODES CURRENTLY IN THE RING+++
+2018/04/29 20:01:57 
+Node 2 is in the ring
+2018/04/29 20:01:57 
++++Contents of Node 2+++
+2018/04/29 20:01:57 Channel Id/Node Id: 2
+2018/04/29 20:01:57 +FingerTable+:
+2018/04/29 20:01:57 Finger Table at 0 is 2
+2018/04/29 20:01:57 Finger Table at 1 is 2
+2018/04/29 20:01:57 +DataTable+:
+2018/04/29 20:01:57 Successor Id: 1
+2018/04/29 20:01:57 Predecessor Id: 1
+2018/04/29 20:01:57 
++++END of Contents of Node 2+++
+2018/04/29 20:01:57 
+Node 1 is in the ring
+2018/04/29 20:01:57 
++++Contents of Node 1+++
+2018/04/29 20:01:57 Channel Id/Node Id: 1
+2018/04/29 20:01:57 +FingerTable+:
+2018/04/29 20:01:57 +DataTable+:
+2018/04/29 20:01:57 Successor Id: 2
+2018/04/29 20:01:57 Predecessor Id: 2
+2018/04/29 20:01:57 
++++END of Contents of Node 1+++
+2018/04/29 20:01:57 +++END OF LIST OF NODES CURRENTLY IN THE RING+++
+2018/04/29 20:01:57 
+Waiting 6 seconds before processing message for Node: 1
+2018/04/29 20:01:59 
+Node: 1 received the following message:{"do":"find-ring-successor","sponsoring-node":0,"mode":"","respond-to":2,"TargetId":3,"Data":{"key":"","value":""},"test-send-to":0}
+2018/04/29 20:01:59 
+FIND_SUCCESSOR:Finding the successor of 3 by asking Node: 2
+2018/04/29 20:01:59 
+BETWEEN: Checking if 3 is in between 2 and 1
+2018/04/29 20:01:59 BEETWEEN: 3 target and 2 first
+2018/04/29 20:01:59 
+FIND_SUCCESSOR:FOUND a place in between for 3. Successor is 1
+2018/04/29 20:01:59 
+BUCKET:Node: 2 was written bucket data
+2018/04/29 20:01:59 +++LIST OF NODES CURRENTLY IN THE RING+++
+2018/04/29 20:01:59 
+Node 2 is in the ring
+2018/04/29 20:01:59 
++++Contents of Node 2+++
+2018/04/29 20:01:59 Channel Id/Node Id: 2
+2018/04/29 20:01:59 +FingerTable+:
+2018/04/29 20:01:59 Finger Table at 0 is 2
+2018/04/29 20:01:59 Finger Table at 1 is 2
+2018/04/29 20:01:59 +DataTable+:
+2018/04/29 20:01:59 Successor Id: 1
+2018/04/29 20:01:59 Predecessor Id: 1
+2018/04/29 20:01:59 
++++END of Contents of Node 2+++
+2018/04/29 20:01:59 
+Node 1 is in the ring
+2018/04/29 20:01:59 
++++Contents of Node 1+++
+2018/04/29 20:01:59 Channel Id/Node Id: 1
+2018/04/29 20:01:59 +FingerTable+:
+2018/04/29 20:01:59 +DataTable+:
+2018/04/29 20:01:59 Successor Id: 2
+2018/04/29 20:01:59 Predecessor Id: 2
+2018/04/29 20:01:59 
++++END of Contents of Node 1+++
+2018/04/29 20:01:59 +++END OF LIST OF NODES CURRENTLY IN THE RING+++
+2018/04/29 20:01:59 
+FIX_FINGERS:Recieved successor 1 for 3 --> 3 at entry 0 of Node 2's table
+2018/04/29 20:01:59 
+FIX_FINGERS:Looking for 4 --> 0 successor at entry 1 for Node 2
+2018/04/29 20:01:59 
+Sending a find-ring-successor for 4 --> 0 to Node 1
+2018/04/29 20:01:59 
+BUCKET:Node: 2's  data is waiting for data to be read ....
+2018/04/29 20:01:59 
+Waiting 2 seconds before processing message for Node: 1
+2018/04/29 20:01:59 
+Node: 1 received the following message:{"do":"find-ring-successor","sponsoring-node":0,"mode":"","respond-to":2,"TargetId":0,"Data":{"key":"","value":""},"test-send-to":0}
+2018/04/29 20:01:59 
+FIND_SUCCESSOR:Finding the successor of 0 by asking Node: 2
+2018/04/29 20:01:59 
+BETWEEN: Checking if 0 is in between 2 and 1
+2018/04/29 20:01:59 BEETWEEN: 0 target and 2 first
+2018/04/29 20:01:59 
+FIND_SUCCESSOR:FOUND a place in between for 0. Successor is 1
+2018/04/29 20:01:59 
+BUCKET:Node: 2 was written bucket data
+2018/04/29 20:01:59 +++LIST OF NODES CURRENTLY IN THE RING+++
+2018/04/29 20:01:59 
+Node 1 is in the ring
+2018/04/29 20:01:59 
++++Contents of Node 1+++
+2018/04/29 20:01:59 Channel Id/Node Id: 1
+2018/04/29 20:01:59 +FingerTable+:
+2018/04/29 20:01:59 +DataTable+:
+2018/04/29 20:01:59 Successor Id: 2
+2018/04/29 20:01:59 Predecessor Id: 2
+2018/04/29 20:01:59 
++++END of Contents of Node 1+++
+2018/04/29 20:01:59 
+Node 2 is in the ring
+2018/04/29 20:01:59 
++++Contents of Node 2+++
+2018/04/29 20:01:59 Channel Id/Node Id: 2
+2018/04/29 20:01:59 +FingerTable+:
+2018/04/29 20:01:59 Finger Table at 0 is 1
+2018/04/29 20:01:59 Finger Table at 1 is 2
+2018/04/29 20:01:59 +DataTable+:
+2018/04/29 20:01:59 Successor Id: 1
+2018/04/29 20:01:59 Predecessor Id: 1
+2018/04/29 20:01:59 
++++END of Contents of Node 2+++
+2018/04/29 20:01:59 +++END OF LIST OF NODES CURRENTLY IN THE RING+++
+2018/04/29 20:01:59 
+FIX_FINGERS:Recieved successor 1 for 4 --> 0 at entry 1 of Node 2's table
+2018/04/29 20:01:59 
+FIX_FINGERS:Node 2 updated to the following: 
+2018/04/29 20:01:59 
++++Contents of Node 2+++
+2018/04/29 20:01:59 Channel Id/Node Id: 2
+2018/04/29 20:01:59 +FingerTable+:
+2018/04/29 20:01:59 Finger Table at 0 is 1
+2018/04/29 20:01:59 Finger Table at 1 is 1
+2018/04/29 20:01:59 +DataTable+:
+2018/04/29 20:01:59 Successor Id: 1
+2018/04/29 20:01:59 Predecessor Id: 1
+2018/04/29 20:01:59 
++++END of Contents of Node 2+++
+2018/04/29 20:01:59 +++LIST OF NODES CURRENTLY IN THE RING+++
+2018/04/29 20:01:59 
+Node 2 is in the ring
+2018/04/29 20:01:59 
++++Contents of Node 2+++
+2018/04/29 20:01:59 Channel Id/Node Id: 2
+2018/04/29 20:01:59 +FingerTable+:
+2018/04/29 20:01:59 Finger Table at 0 is 1
+2018/04/29 20:01:59 Finger Table at 1 is 1
+2018/04/29 20:01:59 +DataTable+:
+2018/04/29 20:01:59 Successor Id: 1
+2018/04/29 20:01:59 Predecessor Id: 1
+2018/04/29 20:01:59 
++++END of Contents of Node 2+++
+2018/04/29 20:01:59 
+Node 1 is in the ring
+2018/04/29 20:01:59 
++++Contents of Node 1+++
+2018/04/29 20:01:59 Channel Id/Node Id: 1
+2018/04/29 20:01:59 +FingerTable+:
+2018/04/29 20:01:59 +DataTable+:
+2018/04/29 20:01:59 Successor Id: 2
+2018/04/29 20:01:59 Predecessor Id: 2
+2018/04/29 20:01:59 
++++END of Contents of Node 1+++
+2018/04/29 20:01:59 +++END OF LIST OF NODES CURRENTLY IN THE RING+++
+2018/04/29 20:01:59 
+Waiting 0 seconds before processing message for Node: 1
+2018/04/29 20:02:00 
+Node: 1 received the following message:{"do":"fix-ring-fingers","sponsoring-node":0,"mode":"","respond-to":0,"TargetId":0,"Data":{"key":"","value":""},"test-send-to":1}
+2018/04/29 20:02:00 
+FIX_FINGERS:Looking for 2 --> 2 successor at entry 0 for Node 1
+2018/04/29 20:02:00 
+Sending a find-ring-successor for 2 --> 2 to Node 2
+2018/04/29 20:02:00 
+BUCKET:Node: 1's  data is waiting for data to be read ....
+2018/04/29 20:02:00 
+Waiting 0 seconds before processing message for Node: 2
+2018/04/29 20:02:00 
+Node: 2 received the following message:{"do":"find-ring-successor","sponsoring-node":0,"mode":"","respond-to":1,"TargetId":2,"Data":{"key":"","value":""},"test-send-to":0}
+2018/04/29 20:02:00 
+FIND_SUCCESSOR:Finding the successor of 2 by asking Node: 1
+2018/04/29 20:02:00 
+BETWEEN: Checking if 2 is in between 1 and 2
+2018/04/29 20:02:00 
+FIND_SUCCESSOR:FOUND a place in between for 2. Successor is 2
+2018/04/29 20:02:00 
+BUCKET:Node: 1 was written bucket data
+2018/04/29 20:02:00 +++LIST OF NODES CURRENTLY IN THE RING+++
+2018/04/29 20:02:00 
+Node 2 is in the ring
+2018/04/29 20:02:00 
++++Contents of Node 2+++
+2018/04/29 20:02:00 Channel Id/Node Id: 2
+2018/04/29 20:02:00 +FingerTable+:
+2018/04/29 20:02:00 Finger Table at 0 is 1
+2018/04/29 20:02:00 Finger Table at 1 is 1
+2018/04/29 20:02:00 +DataTable+:
+2018/04/29 20:02:00 Successor Id: 1
+2018/04/29 20:02:00 Predecessor Id: 1
+2018/04/29 20:02:00 
++++END of Contents of Node 2+++
+2018/04/29 20:02:00 
+Node 1 is in the ring
+2018/04/29 20:02:00 
++++Contents of Node 1+++
+2018/04/29 20:02:00 Channel Id/Node Id: 1
+2018/04/29 20:02:00 +FingerTable+:
+2018/04/29 20:02:00 +DataTable+:
+2018/04/29 20:02:00 Successor Id: 2
+2018/04/29 20:02:00 Predecessor Id: 2
+2018/04/29 20:02:00 
++++END of Contents of Node 1+++
+2018/04/29 20:02:00 +++END OF LIST OF NODES CURRENTLY IN THE RING+++
+2018/04/29 20:02:00 
+FIX_FINGERS:Recieved successor 2 for 2 --> 2 at entry 0 of Node 1's table
+2018/04/29 20:02:00 
+FIX_FINGERS:Looking for 3 --> 3 successor at entry 1 for Node 1
+2018/04/29 20:02:00 
+Sending a find-ring-successor for 3 --> 3 to Node 2
+2018/04/29 20:02:00 
+BUCKET:Node: 1's  data is waiting for data to be read ....
+2018/04/29 20:02:00 
+Waiting 0 seconds before processing message for Node: 2
+2018/04/29 20:02:00 
+Node: 2 received the following message:{"do":"find-ring-successor","sponsoring-node":0,"mode":"","respond-to":1,"TargetId":3,"Data":{"key":"","value":""},"test-send-to":0}
+2018/04/29 20:02:00 
+FIND_SUCCESSOR:Finding the successor of 3 by asking Node: 1
+2018/04/29 20:02:00 
+BETWEEN: Checking if 3 is in between 1 and 2
+2018/04/29 20:02:00 
+FIND_SUCCESSOR: Node 3 is not between 1 and 2
+2018/04/29 20:02:00 
+FIND_SUCCESSOR:STILL NEED TO FIND a successor for 3 and tell 1...will look at 1's table
+2018/04/29 20:02:00 CLOSEST_PRECEEDING:Searching for closest preceeding node.....
+2018/04/29 20:02:00 
+BETWEEN: Checking if 2 is in between 1 and 3
+2018/04/29 20:02:00 
+BUCKET:Node: 1 was written bucket data
+2018/04/29 20:02:00 
+BUCKET:Node: 1's  data is waiting for data to be read ....
+2018/04/29 20:02:00 
+FIX_FINGERS:Recieved successor 2 for 3 --> 3 at entry 1 of Node 1's table
+2018/04/29 20:02:00 
+FIX_FINGERS:Node 1 updated to the following: 
+2018/04/29 20:02:00 
++++Contents of Node 1+++
+2018/04/29 20:02:00 Channel Id/Node Id: 1
+2018/04/29 20:02:00 +FingerTable+:
+2018/04/29 20:02:00 Finger Table at 1 is 2
+2018/04/29 20:02:00 Finger Table at 0 is 2
+2018/04/29 20:02:00 +DataTable+:
+2018/04/29 20:02:00 Successor Id: 2
+2018/04/29 20:02:00 Predecessor Id: 2
+2018/04/29 20:02:00 
++++END of Contents of Node 1+++
+2018/04/29 20:02:00 +++LIST OF NODES CURRENTLY IN THE RING+++
+2018/04/29 20:02:00 
+Node 2 is in the ring
+2018/04/29 20:02:00 
++++Contents of Node 2+++
+2018/04/29 20:02:00 Channel Id/Node Id: 2
+2018/04/29 20:02:00 +FingerTable+:
+2018/04/29 20:02:00 Finger Table at 0 is 1
+2018/04/29 20:02:00 Finger Table at 1 is 1
+2018/04/29 20:02:00 +DataTable+:
+2018/04/29 20:02:00 Successor Id: 1
+2018/04/29 20:02:00 Predecessor Id: 1
+2018/04/29 20:02:00 
++++END of Contents of Node 2+++
+2018/04/29 20:02:00 
+Node 1 is in the ring
+2018/04/29 20:02:00 
++++Contents of Node 1+++
+2018/04/29 20:02:00 Channel Id/Node Id: 1
+2018/04/29 20:02:00 +FingerTable+:
+2018/04/29 20:02:00 Finger Table at 0 is 2
+2018/04/29 20:02:00 Finger Table at 1 is 2
+2018/04/29 20:02:00 +DataTable+:
+2018/04/29 20:02:00 Successor Id: 2
+2018/04/29 20:02:00 Predecessor Id: 2
+2018/04/29 20:02:00 
++++END of Contents of Node 1+++
+2018/04/29 20:02:00 +++END OF LIST OF NODES CURRENTLY IN THE RING+++
+2018/04/29 20:02:20 
+WARNING:Timeout when listening for response data for Node 1
+2018/04/29 20:02:20 Failed to extract the following bucket data:  
+2018/04/29 20:02:20 
+FIND_SUCCESSOR: Failed to find successor for 3
+2018/04/29 20:02:20 
+BUCKET:Node: 1 was written bucket data
+2018/04/29 20:02:20 
+FIND_SUCCESSOR: Node 1 Found the closest preceeding node of 3 to be -1
+
