@@ -512,13 +512,20 @@ func PutData(node_obj *node.Node, respond_to int64, key string, value string) {
     } else {
 		// This is the wrong node to store the data
 		// Need to send this message to the successor
-		// Get Successor Channel ID
-		// Send Message to Successor
-		//node_obj.DataTable[key] := value
 
-	 	log.Printf("\nPUT: Sending key: %s and value: %s to bucket for Node: %d\n", key, value, node_obj.Successor)	
-		SendDataToBucket(node_obj.Successor, key)
-		SendDataToBucket(node_obj.Successor, value)
+		// Check to see current node isn't succcessor
+		// This is to avoid looping
+		if node_obj.ChannelID == node_obj.Successor {
+			log.Printf("\nPUT: Putting Key: %s with value: %s at Node: %d\n", key, value, node_obj.ChannelId) 
+			node_obj.DataTable[key] = value
+			
+		} else {
+			// Send to successor
+	 		log.Printf("\nPUT: Sending key: %s and value: %s to node: %d\n", key, value, node_obj.Successor)	
+			SendDataToNetwork(node_obj.Successor, key)
+			SendDataToNetwork(node_obj.Successor, value)
+
+		}
 	}
 
     return
