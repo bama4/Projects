@@ -515,7 +515,7 @@ func PutData(node_obj *node.Node, respond_to int64, key string, value string) {
 
 		// Check to see current node isn't succcessor
 		// This is to avoid looping
-		if node_obj.ChannelID == node_obj.Successor {
+		if node_obj.ChannelId == node_obj.Successor {
 			log.Printf("\nPUT: Putting Key: %s with value: %s at Node: %d\n", key, value, node_obj.ChannelId) 
 			node_obj.DataTable[key] = value
 			
