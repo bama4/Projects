@@ -495,14 +495,14 @@ func RemoveData(node_obj *node.Node, respond_to int64, key string){
 
 func PutData(node_obj *node.Node, respond_to int64, key string, value string) {
 
-    log.Printf("\nPutting data with key %s by asking Node %d\n", key, node_obj.ChannelId)
+    log.Printf("\nPUT: Putting data with key %s by asking Node %d\n", key, node_obj.ChannelId)
     key_id := map_string_to_id(key)
     log.Printf("\nKey: %s mapped to hash of %d\n", key, key_id)
     FindClosestPreceedingNode(node_obj, key_id)
     bucket_data := GetDataFromBucket(node_obj.ChannelId)
     closest := ExtractIdFromBucketData(bucket_data)
 
-    log.Printf("\nPUT: Found %d as the closest to %d\n", closest, key_id)
+   //log.Printf("\nPUT: Found %d as the closest to %d\n", closest, key_id)
 
     if closest > key_id {
         //Then just say we are at the right node to store
@@ -516,7 +516,7 @@ func PutData(node_obj *node.Node, respond_to int64, key string, value string) {
 		// Check to see current node isn't succcessor
 		// This is to avoid looping
 		if node_obj.ChannelId == node_obj.Successor {
-			log.Printf("\nPUT: Putting Key: %s with value: %s at Node: %d\n", key, value, node_obj.ChannelId) 
+			log.Printf("\nPUT: Current node is it's own successor. Putting Key: %s with value: %s at Node: %d\n", key, value, node_obj.ChannelId) 
 			node_obj.DataTable[key] = value
 			
 		} else {
