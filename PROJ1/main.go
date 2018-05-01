@@ -747,6 +747,9 @@ func Leave_ring(node *node.Node, mode string) {
 				node.FingerTable[k] = -1
 			}
 
+			//clear data table
+			node.DataTable = make(map[string]string)
+
 			log.Printf("\nNode: %d is leaving immediately\n", node.ChannelId)
 			
 		case "orderly":
@@ -772,6 +775,13 @@ func Leave_ring(node *node.Node, mode string) {
 			 string_message, err = json.Marshal(message)
 			 check_error(err)
 			 SendDataToNetwork(node.Predecessor, string(string_message))
+			//Send DataTable to predecessor and then clear data
+			//for key,value := range node.DataTable {
+			//message = msg.Message {Do:"add-data", Data:{Key:key, Value:value}}
+			//string_message, err = json.Marshal(message)
+			//check_error(err)
+			//SendDataToNetwork(node.Predecessor, string(string_message))
+			//}
 			// Loop through nodes fingertable to append to successor
 	
 			// remove node from ring
@@ -792,6 +802,9 @@ func Leave_ring(node *node.Node, mode string) {
 
 				node.FingerTable[k] = -1
 			}
+
+			//clear data table
+			node.DataTable = make(map[string]string)
 			log.Printf("\nNode: %d is leaving immediately\n", node.ChannelId)
 	}
 
