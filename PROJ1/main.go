@@ -477,7 +477,7 @@ func Stabilize(node_obj *node.Node){
 Gets the data...The node_obj is the node that will start the lookup for the data
 The data that is obtained will be sent through the bucket
 */
-func GetData(node_obj *node.Node, respond_to int64, key string){
+func GetData(node_obj *node.Node, respond_to int64, key string)(value string){
 	log.Printf("\nGetting data with key %s by asking Node %d\n", key, node_obj.ChannelId)
 	key_id := map_string_to_id(key)
 	log.Printf("\nKey: %s mapped to hash of %d\n", key, key_id)
@@ -485,11 +485,25 @@ func GetData(node_obj *node.Node, respond_to int64, key string){
 	bucket_data := GetDataFromBucket(node_obj.ChannelId)
 	closest := ExtractIdFromBucketData(bucket_data)
 	log.Printf("\nGET: Found %d as the closest to %d\n", closest, key_id)
+
 	if closest > key_id {
 		//Then just say we are at the right node to store
-		log.Printf("\nStored Data\n")
-		
+	
+		log.Printf("\nGET: Retrieving value: %s at key: %d from node: %d\n", node_obj.DataTable[key], key, node_obj.ChannelId)    	
+		return node_obj.DataTable[key]
+
+	} else {
+
+		if node_obj.ChannelId == node_obj.Successor {
+		log.Printf("\nGET: Retrieving value: %s at key: %d from node: %d\n", node_obj.DataTable[key], key, node_obj.ChannelId)    	
+			return node_obj.DataTable[key]
+
+		} else {
+         	log.Printf("\nPUT: Sending key: %s to node: %d\n", key, node_obj.Successor)    
+            SendDataToNetwork(node_obj.Successor, key)
+		}
 	}
+
 	return
 }
 
