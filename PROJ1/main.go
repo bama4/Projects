@@ -486,25 +486,33 @@ func GetData(node_obj *node.Node, respond_to int64, key string)(value string){
 	closest := ExtractIdFromBucketData(bucket_data)
 	log.Printf("\nGET: Found %d as the closest to %d\n", closest, key_id)
 
-	if closest > key_id {
-		//Then just say we are at the right node to store
-	
-		log.Printf("\nGET: Retrieving value: %s at key: %s from node: %d\n", node_obj.DataTable[key], key, node_obj.ChannelId)    	
-		return node_obj.DataTable[key]
-
-	} else {
-
-		if node_obj.ChannelId == node_obj.Successor {
-		log.Printf("\nGET: Retrieving value: %s at key: %w from node: %d\n", node_obj.DataTable[key], key, node_obj.ChannelId)    	
-			return node_obj.DataTable[key]
-
-		} else {
-         	log.Printf("\nPUT: Sending key: %s to node: %d\n", key, node_obj.Successor)    
-            SendDataToNetwork(node_obj.Successor, key)
-		}
-	}
-
-	return
+    if Between(closest, key_id, node_obj.Successor) || node_obj.ChannelId == node_obj.Successor {
+    
+	// Correct Node
+	log.Printf("\nGET: Retrieving value: %s at key: %s from node %d\n", node_obj.DataTable[key], key, node_obj.ChannelId)
+	return node_obj.DataTable[key]    
+    
+    } else {
+    
+    	// Could be the right node...
+    	if node_obj.ChannelId == node_obj.Successor {
+	log.Printf("\nGET: Retrieving value: %s at key: %s from node %d\n", node_obj.DataTable[key], key, node_obj.ChannelId)
+	return node_obj.DataTable[key]        	
+    	
+    	} else {
+    	
+    	// Wrong node
+	log.Printf("\nGET: Sending key: %s to node: %d\n", key, node_obj.Successor)
+	var message = msg.Message {Do :"get", Data: msg.Data{Key: key}}
+	string_message, err := json.Marshal(message)
+	check_error(err)	
+	SendDataToNetwork(node_obj.Successor, string(string_message))
+	log.Printf("\nGET: Sending key: %s to node: %d\n", key, node_obj.Successor)
+        log.Printf("\nGET: Sent: %s \n", string(string_message))    	
+    	
+    	}
+    }
+    return
 }
 
 /*

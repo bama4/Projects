@@ -3,3 +3,4 @@
 {"do":"put","data":{"key":"fff","value":"DFDF"}, "test-send-to":1}
 {"do":"put","data":{"key":"xxx","value":"YYYY"}, "test-send-to":2}
 {"do":"get","data":{"key":"fff"}, "test-send-to":1}
+{"do":"get","data":{"key":"xxx"}, "test-send-to":2}

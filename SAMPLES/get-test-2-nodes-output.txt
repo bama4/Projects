@@ -1,0 +1,289 @@
+2018/05/03 19:37:55 
+Starting program with the following:
+Instruction File: test_instructions.txt
+Number of network nodes: 4
+Mean wait time: 5.000000
+2018/05/03 19:37:55 This is the coordinator.
+2018/05/03 19:37:55 Node 2 was used to create the ring.
+2018/05/03 19:37:55 
+Adding Node 0 to network
+2018/05/03 19:37:55 
+Adding Node 1 to network
+2018/05/03 19:37:55 
+Adding Node 3 to network
+2018/05/03 19:37:55 INIT_TOPOLOGY:Failed to generate any more network nodes
+2018/05/03 19:37:55 
+Waiting 2 seconds before processing message for Node: 2
+2018/05/03 19:37:56 
+Node: 2 received the following message:{"do":"join-ring","sponsoring-node":1,"mode":"","respond-to":0,"TargetId":0,"data":{"key":"","value":""},"test-send-to":2}
+2018/05/03 19:37:56 
+Node 2 is already in the ring; cannot join-ring
+2018/05/03 19:37:56 +++LIST OF NODES CURRENTLY IN THE RING+++
+2018/05/03 19:37:56 
+Node 2 is in the ring
+2018/05/03 19:37:56 
++++Contents of Node 2+++
+2018/05/03 19:37:56 Channel Id/Node Id: 2
+2018/05/03 19:37:56 +FingerTable+:
+2018/05/03 19:37:56 Finger Table at 0 is 2
+2018/05/03 19:37:56 Finger Table at 1 is 2
+2018/05/03 19:37:56 +DataTable+:
+2018/05/03 19:37:56 Successor Id: 2
+2018/05/03 19:37:56 Predecessor Id: 2
+2018/05/03 19:37:56 
++++END of Contents of Node 2+++
+2018/05/03 19:37:56 +++END OF LIST OF NODES CURRENTLY IN THE RING+++
+2018/05/03 19:37:56 
+Waiting 5 seconds before processing message for Node: 3
+2018/05/03 19:38:06 
+Node: 3 received the following message:{"do":"join-ring","sponsoring-node":1,"mode":"","respond-to":0,"TargetId":0,"data":{"key":"","value":""},"test-send-to":3}
+2018/05/03 19:38:06 
+JOIN_RING:Node 3 is joining the ring now
+2018/05/03 19:38:06 
+BUCKET:Node: 1's  data is waiting for data to be read ....
+2018/05/03 19:38:06 
+Waiting 5 seconds before processing message for Node: 1
+2018/05/03 19:38:06 
+Node: 1 received the following message:{"do":"find-ring-successor","sponsoring-node":0,"mode":"","respond-to":1,"TargetId":3,"data":{"key":"","value":""},"test-send-to":0}
+2018/05/03 19:38:06 
+RespondTo node: 1 is not responding...not in ring?
+2018/05/03 19:38:06 +++LIST OF NODES CURRENTLY IN THE RING+++
+2018/05/03 19:38:06 
+Node 2 is in the ring
+2018/05/03 19:38:06 
++++Contents of Node 2+++
+2018/05/03 19:38:06 Channel Id/Node Id: 2
+2018/05/03 19:38:06 +FingerTable+:
+2018/05/03 19:38:06 Finger Table at 0 is 2
+2018/05/03 19:38:06 Finger Table at 1 is 2
+2018/05/03 19:38:06 +DataTable+:
+2018/05/03 19:38:06 Successor Id: 2
+2018/05/03 19:38:06 Predecessor Id: 2
+2018/05/03 19:38:06 
++++END of Contents of Node 2+++
+2018/05/03 19:38:06 +++END OF LIST OF NODES CURRENTLY IN THE RING+++
+2018/05/03 19:38:26 
+WARNING:Timeout when listening for response data for Node 1
+2018/05/03 19:38:26 Failed to extract the following bucket data:  
+2018/05/03 19:38:26 
+JOIN_RING:SENT find successor message with sponsoring node: 1 and target node: 3. Successor of target is -1
+2018/05/03 19:38:26 +++LIST OF NODES CURRENTLY IN THE RING+++
+2018/05/03 19:38:26 
+Node 3 is in the ring
+2018/05/03 19:38:26 
++++Contents of Node 3+++
+2018/05/03 19:38:26 Channel Id/Node Id: 3
+2018/05/03 19:38:26 +FingerTable+:
+2018/05/03 19:38:26 +DataTable+:
+2018/05/03 19:38:26 Successor Id: 3
+2018/05/03 19:38:26 Predecessor Id: nil
+2018/05/03 19:38:26 
++++END of Contents of Node 3+++
+2018/05/03 19:38:26 
+Node 2 is in the ring
+2018/05/03 19:38:26 
++++Contents of Node 2+++
+2018/05/03 19:38:26 Channel Id/Node Id: 2
+2018/05/03 19:38:26 +FingerTable+:
+2018/05/03 19:38:26 Finger Table at 0 is 2
+2018/05/03 19:38:26 Finger Table at 1 is 2
+2018/05/03 19:38:26 +DataTable+:
+2018/05/03 19:38:26 Successor Id: 2
+2018/05/03 19:38:26 Predecessor Id: 2
+2018/05/03 19:38:26 
++++END of Contents of Node 2+++
+2018/05/03 19:38:26 +++END OF LIST OF NODES CURRENTLY IN THE RING+++
+2018/05/03 19:38:26 
+Waiting 0 seconds before processing message for Node: 1
+2018/05/03 19:38:27 
+Node: 1 received the following message:{"do":"put","sponsoring-node":0,"mode":"","respond-to":0,"TargetId":0,"data":{"key":"fff","value":"DFDF"},"test-send-to":1}
+2018/05/03 19:38:27 
+PUT: Putting data with key fff by asking Node 1
+2018/05/03 19:38:27 
+Key: fff mapped to hash of 2
+2018/05/03 19:38:27 CLOSEST_PRECEEDING:Searching for closest preceeding node.....
+2018/05/03 19:38:27 
+BUCKET:Node: 1 was written bucket data
+2018/05/03 19:38:27 
+BUCKET:Node: 1's  data is waiting for data to be read ....
+2018/05/03 19:38:27 
+BETWEEN: Checking if 1 is in between 2 and 1
+2018/05/03 19:38:27 BEETWEEN: 1 target and 2 first
+2018/05/03 19:38:27 
+PUT: Putting Key: fff with value: DFDF at Node: 1
+2018/05/03 19:38:27 +++LIST OF NODES CURRENTLY IN THE RING+++
+2018/05/03 19:38:27 
+Node 2 is in the ring
+2018/05/03 19:38:27 
++++Contents of Node 2+++
+2018/05/03 19:38:27 Channel Id/Node Id: 2
+2018/05/03 19:38:27 +FingerTable+:
+2018/05/03 19:38:27 Finger Table at 0 is 2
+2018/05/03 19:38:27 Finger Table at 1 is 2
+2018/05/03 19:38:27 +DataTable+:
+2018/05/03 19:38:27 Successor Id: 2
+2018/05/03 19:38:27 Predecessor Id: 2
+2018/05/03 19:38:27 
++++END of Contents of Node 2+++
+2018/05/03 19:38:27 
+Node 3 is in the ring
+2018/05/03 19:38:27 
++++Contents of Node 3+++
+2018/05/03 19:38:27 Channel Id/Node Id: 3
+2018/05/03 19:38:27 +FingerTable+:
+2018/05/03 19:38:27 +DataTable+:
+2018/05/03 19:38:27 Successor Id: 3
+2018/05/03 19:38:27 Predecessor Id: nil
+2018/05/03 19:38:27 
++++END of Contents of Node 3+++
+2018/05/03 19:38:27 +++END OF LIST OF NODES CURRENTLY IN THE RING+++
+2018/05/03 19:38:27 
+Waiting 1 seconds before processing message for Node: 2
+2018/05/03 19:38:27 
+Node: 2 received the following message:{"do":"put","sponsoring-node":0,"mode":"","respond-to":0,"TargetId":0,"data":{"key":"xxx","value":"YYYY"},"test-send-to":2}
+2018/05/03 19:38:27 
+PUT: Putting data with key xxx by asking Node 2
+2018/05/03 19:38:27 
+Key: xxx mapped to hash of 0
+2018/05/03 19:38:27 CLOSEST_PRECEEDING:Searching for closest preceeding node.....
+2018/05/03 19:38:27 
+BETWEEN: Checking if 2 is in between 2 and 0
+2018/05/03 19:38:27 BEETWEEN: 2 target and 2 first
+2018/05/03 19:38:27 
+BETWEEN: Checking if 2 is in between 2 and 0
+2018/05/03 19:38:27 BEETWEEN: 2 target and 2 first
+2018/05/03 19:38:27 
+BUCKET:Node: 2 was written bucket data
+2018/05/03 19:38:27 
+BUCKET:Node: 2's  data is waiting for data to be read ....
+2018/05/03 19:38:27 
+BETWEEN: Checking if 2 is in between 0 and 2
+2018/05/03 19:38:27 
+PUT: Putting Key: xxx with value: YYYY at Node: 2
+2018/05/03 19:38:27 +++LIST OF NODES CURRENTLY IN THE RING+++
+2018/05/03 19:38:27 
+Node 2 is in the ring
+2018/05/03 19:38:27 
++++Contents of Node 2+++
+2018/05/03 19:38:27 Channel Id/Node Id: 2
+2018/05/03 19:38:27 +FingerTable+:
+2018/05/03 19:38:27 Finger Table at 0 is 2
+2018/05/03 19:38:27 Finger Table at 1 is 2
+2018/05/03 19:38:27 +DataTable+:
+2018/05/03 19:38:27 
+Waiting 1 seconds before processing message for Node: 1
+2018/05/03 19:38:27 Data Table at xxx is YYYY
+2018/05/03 19:38:27 Successor Id: 2
+2018/05/03 19:38:27 Predecessor Id: 2
+2018/05/03 19:38:27 
++++END of Contents of Node 2+++
+2018/05/03 19:38:27 
+Node 3 is in the ring
+2018/05/03 19:38:27 
++++Contents of Node 3+++
+2018/05/03 19:38:27 Channel Id/Node Id: 3
+2018/05/03 19:38:27 +FingerTable+:
+2018/05/03 19:38:27 +DataTable+:
+2018/05/03 19:38:27 Successor Id: 3
+2018/05/03 19:38:27 Predecessor Id: nil
+2018/05/03 19:38:27 
++++END of Contents of Node 3+++
+2018/05/03 19:38:27 +++END OF LIST OF NODES CURRENTLY IN THE RING+++
+2018/05/03 19:38:31 
+Node: 1 received the following message:{"do":"get","sponsoring-node":0,"mode":"","respond-to":0,"TargetId":0,"data":{"key":"fff","value":""},"test-send-to":1}
+2018/05/03 19:38:31 
+Getting data with key fff by asking Node 1
+2018/05/03 19:38:31 
+Key: fff mapped to hash of 2
+2018/05/03 19:38:31 CLOSEST_PRECEEDING:Searching for closest preceeding node.....
+2018/05/03 19:38:31 
+BUCKET:Node: 1 was written bucket data
+2018/05/03 19:38:31 
+BUCKET:Node: 1's  data is waiting for data to be read ....
+2018/05/03 19:38:31 
+GET: Found 1 as the closest to 2
+2018/05/03 19:38:31 
+BETWEEN: Checking if 1 is in between 2 and 1
+2018/05/03 19:38:31 BEETWEEN: 1 target and 2 first
+2018/05/03 19:38:31 
+GET: Retrieving value: DFDF at key: fff from node 1
+2018/05/03 19:38:31 +++LIST OF NODES CURRENTLY IN THE RING+++
+2018/05/03 19:38:31 
+Node 2 is in the ring
+2018/05/03 19:38:31 
++++Contents of Node 2+++
+2018/05/03 19:38:31 Channel Id/Node Id: 2
+2018/05/03 19:38:31 
+Waiting 0 seconds before processing message for Node: 2
+2018/05/03 19:38:31 +FingerTable+:
+2018/05/03 19:38:31 
+Node: 2 received the following message:{"do":"get","sponsoring-node":0,"mode":"","respond-to":0,"TargetId":0,"data":{"key":"xxx","value":""},"test-send-to":2}
+2018/05/03 19:38:31 Finger Table at 1 is 2
+2018/05/03 19:38:31 Finger Table at 0 is 2
+2018/05/03 19:38:31 +DataTable+:
+2018/05/03 19:38:31 Data Table at xxx is YYYY
+2018/05/03 19:38:31 Successor Id: 2
+2018/05/03 19:38:31 Predecessor Id: 2
+2018/05/03 19:38:31 
++++END of Contents of Node 2+++
+2018/05/03 19:38:31 
+Getting data with key xxx by asking Node 2
+2018/05/03 19:38:31 
+Key: xxx mapped to hash of 0
+2018/05/03 19:38:31 CLOSEST_PRECEEDING:Searching for closest preceeding node.....
+2018/05/03 19:38:31 
+BETWEEN: Checking if 2 is in between 2 and 0
+2018/05/03 19:38:31 BEETWEEN: 2 target and 2 first
+2018/05/03 19:38:31 
+BETWEEN: Checking if 2 is in between 2 and 0
+2018/05/03 19:38:31 BEETWEEN: 2 target and 2 first
+2018/05/03 19:38:31 
+BUCKET:Node: 2 was written bucket data
+2018/05/03 19:38:31 
+Node 3 is in the ring
+2018/05/03 19:38:31 
++++Contents of Node 3+++
+2018/05/03 19:38:31 Channel Id/Node Id: 3
+2018/05/03 19:38:31 +FingerTable+:
+2018/05/03 19:38:31 +DataTable+:
+2018/05/03 19:38:31 Successor Id: 3
+2018/05/03 19:38:31 Predecessor Id: nil
+2018/05/03 19:38:31 
++++END of Contents of Node 3+++
+2018/05/03 19:38:31 +++END OF LIST OF NODES CURRENTLY IN THE RING+++
+2018/05/03 19:38:31 
+BUCKET:Node: 2's  data is waiting for data to be read ....
+2018/05/03 19:38:31 
+GET: Found 2 as the closest to 0
+2018/05/03 19:38:31 
+BETWEEN: Checking if 2 is in between 0 and 2
+2018/05/03 19:38:31 
+GET: Retrieving value: YYYY at key: xxx from node 2
+2018/05/03 19:38:31 +++LIST OF NODES CURRENTLY IN THE RING+++
+2018/05/03 19:38:31 
+Node 2 is in the ring
+2018/05/03 19:38:31 
++++Contents of Node 2+++
+2018/05/03 19:38:31 Channel Id/Node Id: 2
+2018/05/03 19:38:31 +FingerTable+:
+2018/05/03 19:38:31 Finger Table at 0 is 2
+2018/05/03 19:38:31 Finger Table at 1 is 2
+2018/05/03 19:38:31 +DataTable+:
+2018/05/03 19:38:31 Data Table at xxx is YYYY
+2018/05/03 19:38:31 Successor Id: 2
+2018/05/03 19:38:31 Predecessor Id: 2
+2018/05/03 19:38:31 
++++END of Contents of Node 2+++
+2018/05/03 19:38:31 
+Node 3 is in the ring
+2018/05/03 19:38:31 
++++Contents of Node 3+++
+2018/05/03 19:38:31 Channel Id/Node Id: 3
+2018/05/03 19:38:31 +FingerTable+:
+2018/05/03 19:38:31 +DataTable+:
+2018/05/03 19:38:31 Successor Id: 3
+2018/05/03 19:38:31 Predecessor Id: nil
+2018/05/03 19:38:31 
++++END of Contents of Node 3+++
+2018/05/03 19:38:31 +++END OF LIST OF NODES CURRENTLY IN THE RING+++
+signal: killed
