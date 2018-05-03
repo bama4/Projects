@@ -489,13 +489,13 @@ func GetData(node_obj *node.Node, respond_to int64, key string)(value string){
 	if closest > key_id {
 		//Then just say we are at the right node to store
 	
-		log.Printf("\nGET: Retrieving value: %s at key: %d from node: %d\n", node_obj.DataTable[key], key, node_obj.ChannelId)    	
+		log.Printf("\nGET: Retrieving value: %s at key: %s from node: %d\n", node_obj.DataTable[key], key, node_obj.ChannelId)    	
 		return node_obj.DataTable[key]
 
 	} else {
 
 		if node_obj.ChannelId == node_obj.Successor {
-		log.Printf("\nGET: Retrieving value: %s at key: %d from node: %d\n", node_obj.DataTable[key], key, node_obj.ChannelId)    	
+		log.Printf("\nGET: Retrieving value: %s at key: %w from node: %d\n", node_obj.DataTable[key], key, node_obj.ChannelId)    	
 			return node_obj.DataTable[key]
 
 		} else {
