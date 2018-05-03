@@ -527,22 +527,36 @@ func RemoveData(node_obj *node.Node, respond_to int64, key string){
 	return
 }
 
-func PutData(node_obj *node.Node, key string, value string, respond_to int64) {
+func PutData(node_obj *node.Node, respond_to int64, key string, value string) {
 
-	log.Printf("\nPutting data with key %s by asking Node %d\n", key, node_obj.ChannelId)
-	key_id := map_string_to_id(key)
-	log.Printf("\nKey: %s mapped to hash of %d\n", key, key_id)
-	FindClosestPreceedingNode(node_obj, key_id)
-	bucket_data := GetDataFromBucket(node_obj.ChannelId)
-	closest := ExtractIdFromBucketData(bucket_data)
-	log.Printf("\nPUT: Found %d as the closest to %d\n", closest, key_id)
-	node_obj.DataTable[key] = value
-	if closest > key_id {
-		//Then just say we are at the right node to store
-		log.Printf("\nStored Data\n")
-		
+    log.Printf("\nPUT: Putting data with key %s by asking Node %d\n", key, node_obj.ChannelId)
+    key_id := map_string_to_id(key)
+    log.Printf("\nKey: %s mapped to hash of %d\n", key, key_id)
+    FindClosestPreceedingNode(node_obj, key_id)
+    bucket_data := GetDataFromBucket(node_obj.ChannelId)
+    closest := ExtractIdFromBucketData(bucket_data)
+
+   //log.Printf("\nPUT: Found %d as the closest to %d\n", closest, key_id)
+
+    if Between(closest, key_id, node_obj.Successor) || node_obj.ChannelId == node_obj.Successor {
+        //Then just say we are at the right node to store
+		log.Printf("\nPUT: Putting Key: %s with value: %s at Node: %d\n", key, value, node_obj.ChannelId) 
+		node_obj.DataTable[key] = value
+        
+    } else {
+		// This is the wrong node to store the data
+		// Need to send this message to the successor
+			// Send to successor
+	log.Printf("\nPUT: Sending key: %s and value: %s to node: %d\n", key, value, node_obj.Successor)
+	var message = msg.Message {Do :"put", Data: msg.Data{Key: key, Value: value}}
+	string_message, err := json.Marshal(message)
+	check_error(err)	
+	SendDataToNetwork(node_obj.Successor, string(string_message))
+	log.Printf("\nPUT: Sending key: %s and value: %s to node: %d\n", key, value, node_obj.Successor)
+        log.Printf("\nPUT: Sent: %s \n", string(string_message))
 	}
-	return
+
+    return
 }
 
 
@@ -960,7 +974,7 @@ func net_node(channel_id int64){
 						test_channel <- "Done"
 					}
 				}else if message.Do == "put" {
-					PutData(&node_obj, message.Data.Key,message.Data.Value, node_obj.ChannelId)
+					PutData(&node_obj, node_obj.ChannelId, message.Data.Key, message.Data.Value)
 					if test_mode == true {
 						test_channel <- "Done"
 					}
@@ -1139,7 +1153,7 @@ func coordinator(prog_args []string){
 			if err != nil {
 				log.Println("+++++++++++++++ERROR: Failed To Process the following instruction: ",
 					instructions[i], "+++++++++++++++++++")
-				break
+				continue
 			}
 			//format join ring instruction with random sponsoring node
 			if message.Do == "join-ring" {
