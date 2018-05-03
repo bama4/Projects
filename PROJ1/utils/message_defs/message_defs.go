@@ -27,12 +27,10 @@ type Message struct {
 	TestSendTo int64 `json:"test-send-to"`
 }
 
-
 type Data struct {
 	Key string `json:"key"`
 	Value string `json:"value"`
 }
-
 
 /*
 The tag is a field that nodes use to ensure that the order

@@ -316,6 +316,7 @@ func ExtractIdFromBucketData(data string)(identifier int64){
 	identifier = message.Identifier
 	return
 }
+
 /*
 This function recieves data from the designated bucket.
 The node id given is used to read the correct bucket
@@ -387,7 +388,49 @@ func Join_ring(sponsoring_node_id int64, node_obj *node.Node){
 		node_obj.Successor = node_obj.ChannelId
 	}
     log.Printf("\nJOIN_RING:SENT find successor message with sponsoring node: %d and target node: %d. Successor of target is %d\n", sponsoring_node_id, node_obj.ChannelId, successor)
+
     return
+}
+
+/*
+Builds the node fingers with node_obj being the node with the fingertable
+and sponsor_id being the id of the node that sponsors the find successor calls
+// ask n
+0
+to build n’s finger table.
+n.build fingers(n
+0
+)
+i0 := blog(successor − n)c + 1; // first non-trivial finger.
+for each i ≥ i0 index into finger[];
+finger[i] = n
+0
+.find successor(n + 2
+i−1
+);
+
+*/
+func BuildFingers(node_obj *node.Node, sponsor_id int64){
+	log.Printf("\nBUILD_FINGERS: Building fingers for %d\n", node_obj.ChannelId)
+	i_0 := int(math.Log2(float64(node_obj.Successor - node_obj.ChannelId)))
+	for i := len(node_obj.FingerTable)-1; i >= i_0 ;i-- {
+		//tell sponsor to find the successor of node_obj at index i
+		target_id := int64(node_obj.ChannelId) + int64(math.Exp2(float64(i)))
+		bucket_msg :=  msg.Message {Do: "find-ring-successor", TargetId: target_id, RespondTo: node_obj.ChannelId}
+		string_message, err := json.Marshal(bucket_msg)
+		check_error(err)
+		SendDataToNetwork(sponsor_id, string(string_message))
+		log.Printf("\nBUILD_FINGERS: Listening for the successor of Node %ds entry %d\n", node_obj.ChannelId, i)
+		//listen for the response back containing the successor
+		bucket_data := GetDataFromBucket(node_obj.ChannelId)
+		successor := ExtractIdFromBucketData(bucket_data)
+		map_lock.Lock()
+		node_obj.FingerTable[int64(i)] = int64(successor)
+		map_lock.Unlock()
+	}
+
+	log.Printf("\nBUILD_FINGERS:Finished building fingers. \n")
+	log.Printf("\nBUILD_FINGERS: Node %d updated to:\n", node_obj.ChannelId)
 }
 
 
@@ -661,7 +704,8 @@ func FindClosestPreceedingNode(node_obj *node.Node, target_id int64){
 		finger_entry := ReadNodeFingerTable(node_obj, int64(i))
 		if finger_entry != -1 {
 			//If the entry is 
-			if Between(finger_entry, node_obj.ChannelId, target_id) {			
+			if Between(finger_entry, node_obj.ChannelId, target_id) {
+				log.Printf("\nCLOSEST_PRECEEDING: FOUND IN TABLE preceeding node to be %d\n", closest_preceeding)			
 				//Send the closest preceeding id to the respond-to node that requested it
 				closest_preceeding := finger_entry
 				var bucket_msg =  msg.BucketMessage {Identifier: closest_preceeding}
@@ -675,6 +719,7 @@ func FindClosestPreceedingNode(node_obj *node.Node, target_id int64){
 	}
 	
 	//Send closest proceeding to respond-to
+	log.Printf("\nCLOSEST_PRECEEDING: FOUND preceeding node to be %d\n", closest_preceeding)
 	var bucket_msg =  msg.BucketMessage {Identifier: closest_preceeding}
 	string_message, err := json.Marshal(bucket_msg)
 	check_error(err)
@@ -790,13 +835,13 @@ func Leave_ring(node *node.Node, mode string) {
 			 check_error(err)
 			 SendDataToNetwork(node.Predecessor, string(string_message))
 			//Send DataTable to predecessor and then clear data
-			//for key,value := range node.DataTable {
-			//message = msg.Message {Do:"add-data", Data:{Key:key, Value:value}}
-			//string_message, err = json.Marshal(message)
-			//check_error(err)
-			//SendDataToNetwork(node.Predecessor, string(string_message))
-			//}
-			// Loop through nodes fingertable to append to successor
+			for key,value := range node.DataTable {
+				message = msg.Message {Do:"add-data", Data:msg.Data{Key:key, Value:value}}
+				string_message, err = json.Marshal(message)
+				check_error(err)
+				SendDataToNetwork(node.Predecessor, string(string_message))
+			}
+			//Loop through nodes fingertable to append to successor
 	
 			// remove node from ring
 			//node.Predecessor = -1
@@ -902,10 +947,17 @@ func net_node(channel_id int64){
 						sponsoring_node_id := message.SponsoringNode
 						Join_ring(sponsoring_node_id, &node_obj)
 						ring_nodes.Store(channel_id, &node_obj)
+						//build the fingers of the new node
+						if node_obj.ChannelId != node_obj.Successor{
+							bucket_msg :=  msg.Message {Do: "init-ring-fingers", TargetId: node_obj.Successor}
+							string_message, err := json.Marshal(bucket_msg)
+							check_error(err)
+							SendDataToNetwork(node_obj.ChannelId, string(string_message))
+						}
 					}else{
 						log.Printf("\nNode %d is already in the ring; cannot join-ring\n", channel_id)
 					}
-
+					
 					if test_mode == true {
 						test_channel <- "Done"
 					}
@@ -945,9 +997,11 @@ func net_node(channel_id int64){
 					}
 				//The node that recieves this message is the node
 				//That needs to have its fingers built.
-				//the respond-to field added on is the nodes successor
+				//the target id is the node that is providing the successors to the node_obj
+				//when building the fingertable
+				//{"do":"init-ring-fingers", "target-id": ""}
 				}else if message.Do == "init-ring-fingers"{
-					//InitRingFingers(&node_obj, message.RespondTo)
+					BuildFingers(&node_obj, message.TargetId)
 					
 				}else if message.Do == "get" {
 					GetData(&node_obj, node_obj.ChannelId, message.Data.Key)
