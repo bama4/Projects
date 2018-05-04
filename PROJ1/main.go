@@ -36,7 +36,7 @@ func NewRingNodesMap() *RingNodes {
 	}
 }
 
-/*Safely load a value from the map
+/*Safely load a value from the ring nodes map
 */
 func (r_nodes *RingNodes) Load(key int64)(value *node.Node, ok bool){
 
@@ -48,7 +48,7 @@ func (r_nodes *RingNodes) Load(key int64)(value *node.Node, ok bool){
 
 
 /*
-Safely delete a value from the map
+Safely delete a value from the ring nodes map
 */
 func (r_nodes *RingNodes) Delete(key int64){
 	r_nodes.Lock()
@@ -57,7 +57,7 @@ func (r_nodes *RingNodes) Delete(key int64){
 }
 
 /*
-Safely write to the map
+Safely write to the ring nodes map
 */
 func (r_nodes *RingNodes) Store(key int64, value *node.Node){
 	r_nodes.Lock()
@@ -82,8 +82,8 @@ node id/channel id can be accessed (example: update node 1's predecessor if we
 are currently at node 1 in a lookup done through chord routing)
 
 This map does not replace routing through choord, therefore no functions in this program
-depend on this map for routing. Routing is done through a combination of predecessor,
-successor pointer traversal and finger table lookups.
+depend on this map for routing. Routing is done through communication through a bucket (data)
+channel and a command (network) channel.
 */
 var ring_nodes = NewRingNodesMap()
 
@@ -102,12 +102,15 @@ var wg sync.WaitGroup
 var map_lock = sync.Mutex{}
 
 /*
-This is the number of nodes in the ring
+This is the number of nodes in the ring. The default value is used in test mode
 */
 var number_of_network_nodes int = 4
 
 /*
-This is the global test configuration
+This is the global test configuration value that is set to true if the 
+input args is YES
+Example:
+go run main.go YES test_instructions.txt 1
 */
 var test_mode bool = false
 
@@ -117,7 +120,8 @@ This is the first node in the ring in test mode
 var test_first_node int64 = 2
 
 /*
-This is the test channel
+This is the test channel. The purpose of the test channel is to force the 
+test environment to run one coordinator command at a time.
 */
 var test_channel = make(chan string)
 
@@ -137,10 +141,10 @@ func check_error(err error){
 		log.Println("Error : ", err)
 		os.Exit(1)
 	}
-	
 }
 
-/*Maps a string to an identifier
+/*Maps a string to an identifier. Used in the following actions:
+					get, put, remove
 */
 func map_string_to_id(msg string)(identifier int64){
 	var msg_sum int64 = int64(0)
@@ -149,10 +153,8 @@ func map_string_to_id(msg string)(identifier int64){
 		_ = i
 		msg_sum += int64(r)
 	}
-
 	identifier = int64(msg_sum % int64(number_of_network_nodes))
 	return
-
 }
 
 /*Gets a random node in the chord ring so that the coordinator can send
@@ -259,8 +261,8 @@ func init_topology(){
 }
 
 /*
-Adds a node to the network setting up its network channel and
-bucket channel
+Adds a node to the network setting up its command network channel and
+bucket data channel
 */
 func AddNodeToNetwork(id int64){
 	//add node to network
@@ -281,11 +283,6 @@ func Notify(node_obj *node.Node, predecessor int64){
 	if node_obj.Predecessor == -1 || Between(predecessor, node_obj.Predecessor, node_obj.ChannelId){
 				node_obj.Predecessor = predecessor
 		}
-}
-
-func GetNodeRoutineObj(node_id int64)(ring_node *node.Node){
-	ring_node = ring_nodes.ring_nodes[node_id]
-	return
 }
 
 /*
