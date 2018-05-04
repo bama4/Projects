@@ -363,7 +363,6 @@ func ReadNodeFingerTable(node_obj *node.Node, idx int64)(result int64){
  Sends the sponsoring node a find-ring-successor message through the network
  waits to get back the message representing the successor node
 */
-
 func Join_ring(sponsoring_node_id int64, node_obj *node.Node){
 	
     node_obj.Predecessor = -1
@@ -655,9 +654,7 @@ func FindRingSuccessor(node_obj *node.Node, target_id int64, respond_to int64) i
 	}else{
 		log.Printf("\nFIND_SUCCESSOR: Node %d is not between %d and %d\n", target_id, node_obj.ChannelId, node_obj.Successor)
 		log.Printf("\nFIND_SUCCESSOR:STILL NEED TO FIND a successor for %d and tell %d...will look at %d's table\n", target_id, respond_to, node_obj.ChannelId)
-		FindClosestPreceedingNode(node_obj, target_id)
-		bucket_data := GetDataFromBucket(node_obj.ChannelId)
-		closest_preceeding := ExtractIdFromBucketData(bucket_data)
+		closest_preceeding := FindClosestPreceedingNode(node_obj, target_id)
 
 		//Check if Id failed to get extracted
 		if closest_preceeding == -1 {
@@ -695,8 +692,8 @@ return n;
 corresponding json message is {"do":"find-closest-preceeding-node", "target-id": target, "respond-to": respond}
 respond_to is the node_obj that needs to find the closest preceeding node in its table to targetid
 */
-func FindClosestPreceedingNode(node_obj *node.Node, target_id int64){
-	var closest_preceeding int64 = node_obj.ChannelId
+func FindClosestPreceedingNode(node_obj *node.Node, target_id int64)(closest_preceeding int64){
+	closest_preceeding = node_obj.ChannelId
 
 	log.Println("CLOSEST_PRECEEDING:Searching for closest preceeding node.....")
 	for i := len(node_obj.FingerTable)-1; i >= 0; i-- {
@@ -706,11 +703,7 @@ func FindClosestPreceedingNode(node_obj *node.Node, target_id int64){
 			if Between(finger_entry, node_obj.ChannelId, target_id) {
 				log.Printf("\nCLOSEST_PRECEEDING: FOUND IN TABLE preceeding node to be %d\n", closest_preceeding)			
 				//Send the closest preceeding id to the respond-to node that requested it
-				closest_preceeding := finger_entry
-				var bucket_msg =  msg.BucketMessage {Identifier: closest_preceeding}
-				string_message, err := json.Marshal(bucket_msg)
-				check_error(err)
-				SendDataToBucket(node_obj.ChannelId, string(string_message))
+				closest_preceeding = finger_entry
 				return
 			}
 		}
@@ -719,10 +712,6 @@ func FindClosestPreceedingNode(node_obj *node.Node, target_id int64){
 	
 	//Send closest proceeding to respond-to
 	log.Printf("\nCLOSEST_PRECEEDING: FOUND preceeding node to be %d\n", closest_preceeding)
-	var bucket_msg =  msg.BucketMessage {Identifier: closest_preceeding}
-	string_message, err := json.Marshal(bucket_msg)
-	check_error(err)
-	SendDataToBucket(node_obj.ChannelId, string(string_message))
 	return
 }
 
