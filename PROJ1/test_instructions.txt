@@ -1,16 +1,6 @@
-{"do":"join-ring", "sponsoring-node": 2, "test-send-to": 1}
-{"do":"stabilize-ring", "test-send-to": 1}
-{"do":"stabilize-ring", "test-send-to": 2}
-{"do":"stabilize-ring", "test-send-to": 1}
-{"do":"stabilize-ring", "test-send-to": 2}
-{"do":"fix-ring-fingers", "test-send-to": 2}
-{"do":"fix-ring-fingers", "test-send-to": 1}
-{"do":"fix-ring-fingers", "test-send-to": 2}
-{"do":"fix-ring-fingers", "test-send-to": 1}
+{"do":"join-ring", "sponsoring-node": 1, "test-send-to": 2}
 {"do":"join-ring", "sponsoring-node": 1, "test-send-to": 3}
-{"do":"stabilize-ring", "test-send-to": 3}
-{"do":"stabilize-ring", "test-send-to": 2}
-{"do":"fix-ring-fingers", "test-send-to": 2}
-{"do":"fix-ring-fingers", "test-send-to": 3}
-{"do":"leave-ring", "mode":"orderly", "test-send-to": 2}
-
+{"do":"put","data":{"key":"fff","value":"DFDF"}, "test-send-to":1}
+{"do":"put","data":{"key":"xxx","value":"YYYY"}, "test-send-to":2}
+{"do":"get","data":{"key":"fff"}, "test-send-to":1}
+{"do":"get","data":{"key":"xxx"}, "test-send-to":2}
