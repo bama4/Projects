@@ -1,1 +1,6 @@
 test.go
+.gitignore
+*.old
+*.OLD
+*.bak
+*.BAK

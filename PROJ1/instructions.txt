@@ -1,12 +1,19 @@
-{"do":"join-ring"}
-{"do":"join-ring"}
-{"do":"join-ring"}
-{"do":"join-ring"}
-{"do":"join-ring"}
-{"do":"join-ring"}
-{"do":"join-ring"}
-{"do":"join-ring"}
-{"do":"join-ring"}
-{"do":"join-ring"}
-
-
+{"do":"join-ring", "sponsoring-node": 1}
+{"do":"join-ring", "sponsoring-node": 2}
+{"do":"stabilize-ring", "test-send-to": 1}
+{"do":"stabilize-ring", "test-send-to": 2}
+{"do":"stabilize-ring", "test-send-to": 1}
+{"do":"stabilize-ring", "test-send-to": 2}
+{"do":"fix-ring-fingers", "test-send-to": 2}
+{"do":"fix-ring-fingers", "test-send-to": 1}
+{"do":"fix-ring-fingers", "test-send-to": 2}
+{"do":"fix-ring-fingers", "test-send-to": 1}
+{"do":"join-ring", "sponsoring-node": 1}
+{"do":"stabilize-ring"}
+{"do":"stabilize-ring"}
+{"do":"stabilize-ring"}
+{"do":"fix-ring-fingers"}
+{"do":"fix-ring-fingers"}
+{"do":"fix-ring-fingers"}
+{"do":"fix-ring-fingers"}
+{"do":"fix-ring-fingers"}
