@@ -18,6 +18,8 @@ TABLE OF CONTENTS
   + TEST MODE
 
 Basic Instructions:
+NOTE: Occassionally code may deadlock at the very beginning.
+Keep running the "go run" command until this does not happen
 To run and see debug messages run the program as follows:
 Non-Test Mode: go run main.go <INST FILE> <TEST_MODE> <AVG_WAIT_TIME> <N WHERE #NODES is 2^N>
 Test Mode: go run main.go <INST FILE> <TEST_MODE> <AVG_WAIT_TIME>
