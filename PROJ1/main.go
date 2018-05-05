@@ -210,9 +210,11 @@ func generate_channel_id() (rand_num int64){
 	if len(network) == number_of_network_nodes {
 		map_lock.Lock()
 		//cant generate a unique id
+		log.Println("GENERATE_RANDOM_CHANNEL:Failed to generate a random channel id that is not already in the network")
 		return -1
 	}
 
+	log.Println("GENERATE_RANDOM_CHANNEL:About to generate a random channel not already in network")
 	map_lock.Lock()
 	for(true){
 		rand_num := rand.Intn(number_of_network_nodes)
@@ -223,6 +225,7 @@ func generate_channel_id() (rand_num int64){
 			return int64(rand_num)
 		}
 	}
+	log.Println("GENERATE_RANDOM_CHANNEL:Finished generating a random channel successfully")
 	return int64(rand_num)
 }
 

@@ -1,0 +1,16 @@
+{"do":"join-ring", "sponsoring-node": 1, "test-send-to": 2}
+{"do":"join-ring", "sponsoring-node": 2, "test-send-to": 1}
+{"do":"stabilize-ring", "test-send-to": 1}
+{"do":"stabilize-ring", "test-send-to": 2}
+{"do":"put","data":{"key":"SAmpl3","value":"Data5"}, "test-send-to":2}
+{"do":"stabilize-ring", "test-send-to": 1}
+{"do":"stabilize-ring", "test-send-to": 2}
+{"do":"fix-ring-fingers", "test-send-to": 2}
+{"do":"put","data":{"key":"SAmpdfd434","value":"34Datadfdfd5"}, "test-send-to":1}
+{"do":"fix-ring-fingers", "test-send-to": 1}
+{"do":"fix-ring-fingers", "test-send-to": 2}
+{"do":"put","data":{"key":"SAmpl353535","value":"Darerer"}, "test-send-to":2}
+{"do":"fix-ring-fingers", "test-send-to": 1}
+{"do":"put","data":{"key":"SAmpl343434","value":"Data656565"}, "test-send-to":2}
+{"do":"get","data":{"key":"SAmpl343434","value":"Data656565"}, "test-send-to":2}
+{"do":"put","data":{"key":"SAmpl353535","value":"Data656565"}, "test-send-to":1}
