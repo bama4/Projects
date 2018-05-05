@@ -400,9 +400,7 @@ func FindRingPredecessor(node_obj *node.Node, target_id int64, respond_to int64)
 	log.Printf("\nSearching for predecessor for %d with sponsoring node as %d\n", target_id, node_obj.ChannelId)
 	// While the target id is not between the 
 	for !(target_id > potential_predecessor.ChannelId && target_id < potential_predecessor.Successor){
-		FindClosestPreceedingNode(potential_predecessor, target_id) //find the closest preceeding node from the target-id
-		bucket_data := GetDataFromBucket(node_obj.ChannelId)
-		potential_predecessor_id := ExtractIdFromBucketData(bucket_data)
+		potential_predecessor_id := FindClosestPreceedingNode(potential_predecessor, target_id) //find the closest preceeding node from the target-id
 		//If the potential predecessor is equal to the node
 		//that sponsored finding the predecessor...
 		if potential_predecessor_id == node_obj.ChannelId{
@@ -477,17 +475,30 @@ Gets the data...The node_obj is the node that will start the lookup for the data
 The data that is obtained will be sent through the bucket
 */
 func GetData(node_obj *node.Node, respond_to int64, key string){
-	log.Printf("\nGetting data with key %s by asking Node %d\n", key, node_obj.ChannelId)
+	log.Printf("\nGET:Getting data with key %s by asking Node %d\n", key, node_obj.ChannelId)
 	key_id := map_string_to_id(key)
-	log.Printf("\nKey: %s mapped to hash of %d\n", key, key_id)
-	FindClosestPreceedingNode(node_obj, key_id)
-	bucket_data := GetDataFromBucket(node_obj.ChannelId)
-	closest := ExtractIdFromBucketData(bucket_data)
+	log.Printf("\nGET:Key: %s mapped to hash of %d\n", key, key_id)
+	closest := FindClosestPreceedingNode(node_obj, key_id)
 	log.Printf("\nGET: Found %d as the closest to %d\n", closest, key_id)
-	if closest > key_id {
-		//Then just say we are at the right node to store
-		log.Printf("\nStored Data\n")
+	if Between(closest, key_id, node_obj.Successor) || node_obj.ChannelId == node_obj.Successor {
+		//Then just say we are at the right node to get the data
+		if value, ok := node_obj.DataTable[key]; ok {
+			log.Printf("\nGET:Retrieved the value for %s from Node %d\n", value, node_obj.ChannelId)
+		}else{
+			log.Printf("\nGET:At Node %d for data with key %s but data is not in table\n", node_obj.ChannelId, key)
+		}
 		
+	} else {
+		// This is the wrong node to get the data from
+		// Need to send this message to the successor
+		// Send to successor
+		log.Printf("\nGET: Sending key: %s to node: %d\n", key, node_obj.Successor)
+		var message = msg.Message {Do :"get", Data: msg.Data{Key: key}}
+		string_message, err := json.Marshal(message)
+		check_error(err)	
+		SendDataToNetwork(node_obj.Successor, string(string_message))
+		log.Printf("\nGET: Sending key: %s to node: %d\n", key,node_obj.Successor)
+		log.Printf("\nGET: Sent: %s \n", string(string_message))
 	}
 	return
 }
@@ -497,17 +508,31 @@ Removes the data...The node_obj is the node that will start the lookup for the d
 The data that is obtained will be sent through the bucket
 */
 func RemoveData(node_obj *node.Node, respond_to int64, key string){
-	log.Printf("\nGetting data with key %s by asking Node %d\n", key, node_obj.ChannelId)
+	log.Printf("\nREMOVE:Getting data with key %s by asking Node %d\n", key, node_obj.ChannelId)
 	key_id := map_string_to_id(key)
-	log.Printf("\nKey: %s mapped to hash of %d\n", key, key_id)
-	FindClosestPreceedingNode(node_obj, key_id)
-	bucket_data := GetDataFromBucket(node_obj.ChannelId)
-	closest := ExtractIdFromBucketData(bucket_data)
+	log.Printf("\nREMOVE:Key: %s mapped to hash of %d\n", key, key_id)
+	closest := FindClosestPreceedingNode(node_obj, key_id)
 	log.Printf("\nREMOVE: Found %d as the closest to %d\n", closest, key_id)
-	if closest > key_id {
-		//Then just say we are at the right node to store
-		log.Printf("\nStored Data\n")
-		
+	if Between(closest, key_id, node_obj.Successor) || node_obj.ChannelId == node_obj.Successor {
+		if value, ok := node_obj.DataTable[key]; ok {
+			log.Printf("\nREMOVE:Retrieved the value for %s from Node %d..removing data\n", value, node_obj.ChannelId)
+			map_lock.Lock()
+			delete(node_obj.DataTable, key)
+			map_lock.Unlock()
+		}else{
+			log.Printf("\nREMOVE:At Node %d for data with key %s but data is not in table\n", node_obj.ChannelId, key)
+		}
+	} else {
+		// This is the wrong node to store the data
+		// Need to send this message to the successor
+		// Send to successor
+		log.Printf("\nREMOVE: Sending key: %s  to node: %d\n", key,  node_obj.Successor)
+		var message = msg.Message {Do :"remove", Data: msg.Data{Key: key}}
+		string_message, err := json.Marshal(message)
+		check_error(err)	
+		SendDataToNetwork(node_obj.Successor, string(string_message))
+		log.Printf("\nREMOVE: Sending key: %s to node: %d\n", key, node_obj.Successor)
+		log.Printf("\nREMOVE: Sent: %s \n", string(string_message))
 	}
 	return
 }
@@ -516,12 +541,8 @@ func PutData(node_obj *node.Node, respond_to int64, key string, value string) {
 
     log.Printf("\nPUT: Putting data with key %s by asking Node %d\n", key, node_obj.ChannelId)
     key_id := map_string_to_id(key)
-    log.Printf("\nKey: %s mapped to hash of %d\n", key, key_id)
-    FindClosestPreceedingNode(node_obj, key_id)
-    bucket_data := GetDataFromBucket(node_obj.ChannelId)
-    closest := ExtractIdFromBucketData(bucket_data)
-
-   //log.Printf("\nPUT: Found %d as the closest to %d\n", closest, key_id)
+    log.Printf("\nPUT:Key: %s mapped to hash of %d\n", key, key_id)
+    closest := FindClosestPreceedingNode(node_obj, key_id)
 
     if Between(closest, key_id, node_obj.Successor) || node_obj.ChannelId == node_obj.Successor {
         //Then just say we are at the right node to store
@@ -612,9 +633,7 @@ func FindRingSuccessor(node_obj *node.Node, target_id int64, respond_to int64) i
 	}else{
 		log.Printf("\nFIND_SUCCESSOR: Node %d is not between %d and %d\n", target_id, node_obj.ChannelId, node_obj.Successor)
 		log.Printf("\nFIND_SUCCESSOR:STILL NEED TO FIND a successor for %d and tell %d...will look at %d's table\n", target_id, respond_to, node_obj.ChannelId)
-		FindClosestPreceedingNode(node_obj, target_id)
-		bucket_data := GetDataFromBucket(node_obj.ChannelId)
-		closest_preceeding := ExtractIdFromBucketData(bucket_data)
+		closest_preceeding := FindClosestPreceedingNode(node_obj, target_id)
 
 		//Check if Id failed to get extracted
 		if closest_preceeding == -1 {
@@ -652,8 +671,8 @@ return n;
 corresponding json message is {"do":"find-closest-preceeding-node", "target-id": target, "respond-to": respond}
 respond_to is the node_obj that needs to find the closest preceeding node in its table to targetid
 */
-func FindClosestPreceedingNode(node_obj *node.Node, target_id int64){
-	var closest_preceeding int64 = node_obj.ChannelId
+func FindClosestPreceedingNode(node_obj *node.Node, target_id int64)(closest_preceeding int64){
+	closest_preceeding = node_obj.ChannelId
 
 	log.Println("CLOSEST_PRECEEDING:Searching for closest preceeding node.....")
 	for i := len(node_obj.FingerTable)-1; i >= 0; i-- {
@@ -662,11 +681,7 @@ func FindClosestPreceedingNode(node_obj *node.Node, target_id int64){
 			//If the entry is 
 			if Between(finger_entry, node_obj.ChannelId, target_id) {			
 				//Send the closest preceeding id to the respond-to node that requested it
-				closest_preceeding := finger_entry
-				var bucket_msg =  msg.BucketMessage {Identifier: closest_preceeding}
-				string_message, err := json.Marshal(bucket_msg)
-				check_error(err)
-				SendDataToBucket(node_obj.ChannelId, string(string_message))
+				closest_preceeding = finger_entry
 				return
 			}
 		}
@@ -674,10 +689,6 @@ func FindClosestPreceedingNode(node_obj *node.Node, target_id int64){
 	}
 	
 	//Send closest proceeding to respond-to
-	var bucket_msg =  msg.BucketMessage {Identifier: closest_preceeding}
-	string_message, err := json.Marshal(bucket_msg)
-	check_error(err)
-	SendDataToBucket(node_obj.ChannelId, string(string_message))
 	return
 }
 
@@ -708,9 +719,11 @@ func FixRingFingers(node_obj *node.Node){
 		bucket_data := GetDataFromBucket(node_obj.ChannelId)
 		entry_successor := ExtractIdFromBucketData(bucket_data)
 		log.Printf("\nFIX_FINGERS:Recieved successor %d for %d --> %d at entry %d of Node %d's table\n", entry_successor, raw_entry_id, target_id , i, node_obj.ChannelId)
-		map_lock.Lock()
-		node_obj.FingerTable[int64(i)] = entry_successor
-		map_lock.Unlock()
+		if entry_successor != -1 {
+			map_lock.Lock()
+			node_obj.FingerTable[int64(i)] = entry_successor
+			map_lock.Unlock()
+		}
 	}
 	log.Printf("\nFIX_FINGERS:Node %d updated to the following: \n", node_obj.ChannelId)
 	print_node(node_obj)
