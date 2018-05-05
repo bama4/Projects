@@ -31,6 +31,7 @@ Used for sending/receiving data between nodes
 Two notable functions for bucket channels are:
 - SendDataToBucket - Sends the given string json data message to the designated channel id (non-blocking)
 - GetDataFromBucket - Listens on the specified bucket channel for incoming data messages (blocking)
+  By default, the GetDataFromBucket timeout after 20 seconds of waiting for messages.
 
 COMMAND (Network) CHANNELS
 Used for sending/receiving commands between nodes
