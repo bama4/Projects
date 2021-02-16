@@ -1,0 +1,112 @@
+2018/04/30 23:05:32
+Starting program with the following:
+Instruction File: test_instructions.txt
+Number of network nodes: 4
+Mean wait time: 3.000000
+2018/04/30 23:05:32 This is the coordinator.
+2018/04/30 23:05:32 Node 2 was used to create the ring.
+2018/04/30 23:05:32
+Adding Node 0 to network
+2018/04/30 23:05:32
+Adding Node 1 to network
+2018/04/30 23:05:32
+Adding Node 3 to network
+2018/04/30 23:05:32 INIT_TOPOLOGY:Failed to generate any more network nodes
+2018/04/30 23:05:32
+Waiting 3 seconds before processing message for Node: 2
+2018/04/30 23:05:32
+Node: 2 received the following message:{"do":"join-ring","sponsoring-node":1,"mode":"","respond-to":0,"TargetId":0,"Data":{"key":"","value":""},"test-send-to":2}
+2018/04/30 23:05:32
+Node 2 is already in the ring; cannot join-ring
+2018/04/30 23:05:32 +++LIST OF NODES CURRENTLY IN THE RING+++
+2018/04/30 23:05:32
+Node 2 is in the ring
+2018/04/30 23:05:32
++++Contents of Node 2+++
+2018/04/30 23:05:32 Channel Id/Node Id: 2
+2018/04/30 23:05:32 +FingerTable+:
+2018/04/30 23:05:32 Finger Table at 0 is 2
+2018/04/30 23:05:32 Finger Table at 1 is 2
+2018/04/30 23:05:32 +DataTable+:
+2018/04/30 23:05:32 Successor Id: 2
+2018/04/30 23:05:32 Predecessor Id: 2
+2018/04/30 23:05:32
++++END of Contents of Node 2+++
+2018/04/30 23:05:32 +++END OF LIST OF NODES CURRENTLY IN THE RING+++
+2018/04/30 23:05:32
+Waiting 3 seconds before processing message for Node: 3
+2018/04/30 23:05:34
+Node: 3 received the following message:{"do":"join-ring","sponsoring-node":2,"mode":"","respond-to":0,"TargetId":0,"Data":{"key":"","value":""},"test-send-to":3}
+2018/04/30 23:05:34
+JOIN_RING:Node 3 is joining the ring now
+2018/04/30 23:05:34
+BUCKET:Node: 2's  data is waiting for data to be read ....
+2018/04/30 23:05:34
+Waiting 0 seconds before processing message for Node: 2
+2018/04/30 23:05:37
+Node: 2 received the following message:{"do":"find-ring-successor","sponsoring-node":0,"mode":"","respond-to":2,"TargetId":3,"Data":{"key":"","value":""},"test-send-to":0}
+2018/04/30 23:05:37
+FIND_SUCCESSOR:Finding the successor of 3 by asking Node: 2
+2018/04/30 23:05:37
+BETWEEN: Checking if 3 is in between 2 and 2
+2018/04/30 23:05:37 BEETWEEN: 3 target and 2 first
+2018/04/30 23:05:37
+FIND_SUCCESSOR:FOUND a place in between for 3. Successor is 2
+2018/04/30 23:05:37
+BUCKET:Node: 2 was written bucket data
+2018/04/30 23:05:37 +++LIST OF NODES CURRENTLY IN THE RING+++
+2018/04/30 23:05:37
+Node 2 is in the ring
+2018/04/30 23:05:37
++++Contents of Node 2+++
+2018/04/30 23:05:37 Channel Id/Node Id: 2
+2018/04/30 23:05:37 +FingerTable+:
+2018/04/30 23:05:37 Finger Table at 0 is 2
+2018/04/30 23:05:37 Finger Table at 1 is 2
+2018/04/30 23:05:37
+BUCKET:Node: 2's data has finished being read ....
+2018/04/30 23:05:37 +DataTable+:
+2018/04/30 23:05:37
+JOIN_RING:SENT find successor message with sponsoring node: 2 and target node: 3. Successor of target is 2
+2018/04/30 23:05:37 +++LIST OF NODES CURRENTLY IN THE RING+++
+2018/04/30 23:05:37
+Node 2 is in the ring
+2018/04/30 23:05:37
++++Contents of Node 2+++
+2018/04/30 23:05:37 Channel Id/Node Id: 2
+2018/04/30 23:05:37 +FingerTable+:
+2018/04/30 23:05:37 Finger Table at 0 is 2
+2018/04/30 23:05:37 Finger Table at 1 is 2
+2018/04/30 23:05:37 +DataTable+:
+2018/04/30 23:05:37 Successor Id: 2
+2018/04/30 23:05:37 Predecessor Id: 2
+2018/04/30 23:05:37 Successor Id: 2
+2018/04/30 23:05:37 Predecessor Id: 2
+2018/04/30 23:05:37
++++END of Contents of Node 2+++
+2018/04/30 23:05:37
+Node 3 is in the ring
+2018/04/30 23:05:37
++++Contents of Node 3+++
+2018/04/30 23:05:37
++++END of Contents of Node 2+++
+2018/04/30 23:05:37
+Node 3 is in the ring
+2018/04/30 23:05:37
++++Contents of Node 3+++
+2018/04/30 23:05:37 Channel Id/Node Id: 3
+2018/04/30 23:05:37 +FingerTable+:
+2018/04/30 23:05:37 Channel Id/Node Id: 3
+2018/04/30 23:05:37 +DataTable+:
+2018/04/30 23:05:37 Successor Id: 2
+2018/04/30 23:05:37 Predecessor Id: nil
+2018/04/30 23:05:37 +FingerTable+:
+2018/04/30 23:05:37 +DataTable+:
+2018/04/30 23:05:37 Successor Id: 2
+2018/04/30 23:05:37 Predecessor Id: nil
+2018/04/30 23:05:37
++++END of Contents of Node 3+++
+2018/04/30 23:05:37 +++END OF LIST OF NODES CURRENTLY IN THE RING+++
+2018/04/30 23:05:37
++++END of Contents of Node 3+++
+2018/04/30 23:05:37 +++END OF LIST OF NODES CURRENTLY IN THE RING+++
